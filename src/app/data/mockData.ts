@@ -1,5 +1,7 @@
 import { Product, VideoFeed } from '../types';
 
+const staticAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+
 export const mockProducts: Product[] = [
   {
     id: '1',
@@ -77,10 +79,10 @@ export const mockProducts: Product[] = [
 const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [
   {
     id: 'v1',
-    videoUrl: '/videos/reels1.mp4',
+    videoUrl: staticAsset('/videos/reels1.mp4'),
     thumbnail: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=414&h=896&fit=crop',
     username: 'golsare_nazi',
-    userAvatar: '/pics/avatars/avatar1.jpg',
+    userAvatar: staticAsset('/pics/avatars/avatar1.jpg'),
     likes: 4445,
     comments: 64,
     shares: 123,
@@ -92,7 +94,7 @@ const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [
   },
   {
     id: 'v2',
-    videoUrl: '/videos/reels2.mp4',
+    videoUrl: staticAsset('/videos/reels2.mp4'),
     thumbnail: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=414&h=896&fit=crop',
     username: 'craig_love',
     userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
@@ -107,7 +109,7 @@ const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [
   },
   {
     id: 'v3',
-    videoUrl: '/videos/reels3.mp4',
+    videoUrl: staticAsset('/videos/reels3.mp4'),
     thumbnail: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=414&h=896&fit=crop',
     username: 'fashionista_jane',
     userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
@@ -122,7 +124,7 @@ const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [
   },
   {
     id: 'v4',
-    videoUrl: '/videos/reels4.mp4',
+    videoUrl: staticAsset('/videos/reels4.mp4'),
     thumbnail: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=414&h=896&fit=crop',
     username: 'style_guru',
     userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',

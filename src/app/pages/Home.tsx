@@ -238,6 +238,7 @@ export default function Home() {
               src={currentVideo.videoUrl}
               className="w-full h-full object-cover"
               autoPlay
+              muted
               loop
               playsInline
               preload="metadata"
