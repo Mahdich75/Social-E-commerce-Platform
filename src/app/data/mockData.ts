@@ -1,0 +1,194 @@
+import { Product, VideoFeed } from '../types';
+
+export const mockProducts: Product[] = [
+  {
+    id: '1',
+    category: 'accessory',
+    name: 'هدبند گل‌دوزی‌شده',
+    price: 29.99,
+    image: 'https://dkstatics-public.digikala.com/digikala-products/05602f23a8f7d6511716ab5fceeeda9d9fecb883_1737840704.jpg?x-oss-process=image/resize,m_lfit,h_800,w_800/quality,q_90',
+    description: 'هدبند گل‌دوزی‌شده زیبا 🌸، مناسب برای استایل خاص و جلوه بیشتر در هر موقعیت!',
+    sizes: ['One Size'],
+    rating: 4.8,
+    reviews: 256,
+  },
+  {
+    id: '2',
+    category: 'wearables',
+    name: 'Smart Watch',
+    price: 249.99,
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop',
+    description: 'Advanced fitness tracking and notifications',
+    sizes: ['S', 'M', 'L'],
+    colors: ['Black', 'Silver', 'Gold'],
+    rating: 4.7,
+    reviews: 892,
+  },
+  {
+    id: '3',
+    category: 'accessories',
+    name: 'Minimalist Backpack',
+    price: 79.99,
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=500&fit=crop',
+    description: 'Sleek design with laptop compartment',
+    sizes: ['One Size'],
+    colors: ['Black', 'Gray', 'Navy'],
+    rating: 4.3,
+    reviews: 567,
+  },
+  {
+    id: '4',
+    category: 'accessories',
+    name: 'Leather Wallet',
+    price: 45.99,
+    image: 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=500&h=500&fit=crop',
+    description: 'Genuine leather bifold wallet',
+    sizes: ['One Size'],
+    colors: ['Brown', 'Black'],
+    rating: 4.6,
+    reviews: 345,
+  },
+  {
+    id: '5',
+    category: 'eyewear',
+    name: 'Sunglasses',
+    price: 129.99,
+    image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&h=500&fit=crop',
+    description: 'UV protection polarized lenses',
+    sizes: ['One Size'],
+    colors: ['Black', 'Tortoise', 'Blue'],
+    rating: 4.8,
+    reviews: 678,
+  },
+  {
+    id: '6',
+    category: 'footwear',
+    name: 'Running Shoes',
+    price: 119.99,
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&h=500&fit=crop',
+    description: 'Lightweight and breathable athletic shoes',
+    sizes: ['7', '8', '9', '10', '11', '12'],
+    colors: ['White', 'Black', 'Blue', 'Red'],
+    rating: 4.4,
+    reviews: 1567,
+  },
+];
+
+const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [
+  {
+    id: 'v1',
+    videoUrl: '/videos/reels1.mp4',
+    thumbnail: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=414&h=896&fit=crop',
+    username: 'golsare_nazi',
+    userAvatar: '/pics/avatars/avatar1.jpg',
+    likes: 4445,
+    comments: 64,
+    shares: 123,
+    description: 'هدبند گل‌دوزی‌شده فوق‌العاده زیبا 🌸، بهترین انتخاب برای استایل خاص و جذاب شما!',
+    hashtags: ['#هدبند', '#گل_دوزی', '#استایل_خاص', '#مد', '#زیبایی'],
+    musicTitle: 'پاییز سردم',
+    product: mockProducts[0],
+    isLive: false,
+  },
+  {
+    id: 'v2',
+    videoUrl: '/videos/reels2.mp4',
+    thumbnail: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=414&h=896&fit=crop',
+    username: 'craig_love',
+    userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+    likes: 328700,
+    comments: 578,
+    shares: 891,
+    description: 'The most satisfying unboxing ever!',
+    hashtags: ['#fyp', '#satisfying', '#unboxing'],
+    musicTitle: 'Just Good Music 24/7 Stay See Live Radio 🎧',
+    product: mockProducts[1],
+    isLive: false,
+  },
+  {
+    id: 'v3',
+    videoUrl: '/videos/reels3.mp4',
+    thumbnail: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=414&h=896&fit=crop',
+    username: 'fashionista_jane',
+    userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
+    likes: 12500,
+    comments: 234,
+    shares: 456,
+    description: 'Perfect minimalist backpack for daily commute! 🎒',
+    hashtags: ['#fashion', '#minimalist', '#backpack'],
+    musicTitle: 'Chill Vibes - Lofi Hip Hop',
+    product: mockProducts[2],
+    isLive: false,
+  },
+  {
+    id: 'v4',
+    videoUrl: '/videos/reels4.mp4',
+    thumbnail: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=414&h=896&fit=crop',
+    username: 'style_guru',
+    userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
+    likes: 8900,
+    comments: 156,
+    shares: 234,
+    description: 'Premium leather wallet - timeless classic! 👛',
+    hashtags: ['#leather', '#wallet', '#style'],
+    musicTitle: 'Smooth Jazz Collection',
+    product: mockProducts[3],
+    isLive: true,
+  },
+];
+
+export const mockVideos: VideoFeed[] = baseVideos.map((video) => ({
+  ...video,
+  similarReels: [],
+}));
+
+const videoById = Object.fromEntries(mockVideos.map((video) => [video.id, video])) as Record<string, VideoFeed>;
+
+const setSimilarReels = (videoId: string, similarIds: string[]) => {
+  const source = videoById[videoId];
+  if (!source) return;
+
+  source.similarReels = similarIds
+    .map((id) => videoById[id])
+    .filter((video): video is VideoFeed => Boolean(video));
+};
+
+setSimilarReels('v1', ['v2', 'v3']);
+setSimilarReels('v2', ['v1', 'v4']);
+setSimilarReels('v3', ['v4', 'v1']);
+setSimilarReels('v4', ['v3', 'v2']);
+
+export const reelCommentsFa: Record<string, string[]> = {
+  v1: [
+    'گل‌دوزیش خیلی تمیز کار شده 🌸 نخ‌ها بعد از شستشو خراب نمی‌شن؟',
+    'رنگ قرمزش فوق‌العاده‌ست، مدل کرم یا مشکی هم دارید؟ 🤍',
+    'روی سر محکم می‌ایسته؟ موهام لیزه می‌ترسم سر بخوره 😅',
+    'جنس پارچش نرمه؟ برای استفاده طولانی اذیت نمی‌کنه؟',
+    'قیمتش نسبت به کار دست بودنش خیلی مناسبه، احتمال زیاد سفارش می‌دم 💸',
+    'برای مهمونی و استایل مجلسی هم میشه استفاده کرد یا بیشتر روزمره‌ست؟ ✨'
+  ],
+  v2: [
+    'این ساعت هوشمند با آیفون کامل سینک میشه؟ ⌚',
+    'رنگ طلاییش خیلی لاکچریه، برای هدیه گزینه خوبیه 🎁',
+    'سایز M برای مچ باریک مناسبه یا S بهتره؟',
+    'دقت سنسور ضربان قلبش چطوره؟ برای ورزش می‌خوام',
+    'قیمتش بالاست ولی اگر کیفیتش خوب باشه ارزش خرید داره 👌',
+    'بند اضافه هم داخل جعبه هست یا جدا باید بخریم؟',
+  ],
+  v3: [
+    'این کوله برای لپ‌تاپ 15.6 اینچ جا داره؟ 🎒',
+    'رنگ سرمه‌ایش خیلی قشنگه، کاش موجود بشه 🙏',
+    'کیفیت زیپ و دوختش چطوره؟ من استفاده روزانه دارم',
+    'برای دانشگاه خیلی کاربردیه، سبک هم هست؟',
+    'قیمتش نسبت به طراحی مینیمالش منطقیه، به نظرم ارزش خرید داره 💯',
+    'ضد آب هست؟ برای روزهای بارونی لازم دارم ☔',
+  ],
+  v4: [
+    'این کیف پول چرمی خیلی خوش‌فرمه 👛 چرم طبیعیه یا مصنوعی؟',
+    'رنگ قهوه‌ایش فوق‌العاده‌ست، موجودی همیشگی دارید؟',
+    'کیفیت دوخت کناره‌ها عالی به نظر میاد، دوامش چقدره؟',
+    'جای کارت‌هاش برای استفاده روزمره کافیه؟',
+    'قیمتش برای این کیفیت خیلی خوبه، من یکی می‌خوام 😍',
+    'برندش ضمانت کیفیت یا مرجوعی هم داره؟',
+  ],
+};
