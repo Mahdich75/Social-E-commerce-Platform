@@ -29,7 +29,7 @@ export const mockProducts: Product[] = [
   {
     id: '3',
     category: 'accessories',
-    name: 'Minimalist Backpack',
+    name: 'بازی فکری Everdell',
     price: 79.99,
     image: 'https://th.bing.com/th/id/OIP.MyPy-noNXurOuxYrzGPktgHaHa?o=7&cb=defcachec2rm=3&rs=1&pid=ImgDetMain&o=7&rm=3',
     description: 'طراحی چشم‌نواز و جمع‌وجور با اینسرت منظم؛ همه اجزای بازی دقیق و مرتب در جعبه قرار می‌گیرند.',
