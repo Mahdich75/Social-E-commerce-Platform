@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Heart, MessageCircle, Share2, Music, ShoppingBag, Bell, MessageSquare, Bookmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Link } from 'react-router';
 import { mockVideos } from '../data/mockData';
 import { ProductDrawer } from '../components/ProductDrawer';
 import { CommentsDrawer } from '../components/CommentsDrawer';
@@ -256,22 +257,30 @@ export default function Home() {
           </div>
         )}
 
-        <div className="absolute top-0 left-0 right-0 pt-12 pb-4 bg-gradient-to-b from-black/40 to-transparent z-10">
-          <div className="flex items-center justify-between px-4">
-            <div className="flex items-center gap-8 flex-1 justify-center">
-              <button className="text-white/60 text-base font-semibold">Following</button>
-              <div className="w-px h-3 bg-white/20" />
-              <button className="text-white text-lg font-bold">For You</button>
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[414px] z-30 bg-gradient-to-b from-black/55 to-transparent pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
+          <div className="relative flex items-center justify-center px-4">
+            <div className="flex items-center gap-4">
+              <button className="text-white/60 text-[15px] font-semibold">Following</button>
+              <div className="w-px h-3 bg-white/25" />
+              <button className="text-white text-[17px] font-bold">For You</button>
             </div>
 
-            <div className="flex items-center gap-3 absolute right-4">
-              <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
+            <div className="absolute right-2 top-0 flex items-center gap-1">
+              <Link
+                to="/messages"
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                aria-label="Open messages"
+              >
                 <MessageSquare className="w-6 h-6 text-white" />
-              </button>
-              <button className="p-2 hover:bg-white/10 rounded-full transition-colors relative">
+              </Link>
+              <Link
+                to="/notifications"
+                className="p-2 hover:bg-white/10 rounded-full transition-colors relative"
+                aria-label="Open notifications"
+              >
                 <Bell className="w-6 h-6 text-white" />
                 <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-black" />
-              </button>
+              </Link>
             </div>
           </div>
         </div>

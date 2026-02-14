@@ -6,6 +6,8 @@ import Create from './pages/Create';
 import Basket from './pages/Basket';
 import Profile from './pages/Profile';
 import Checkout from './pages/Checkout';
+import Messages from './pages/Messages';
+import Notifications from './pages/Notifications';
 
 export const router = createBrowserRouter([
   {
@@ -18,6 +20,8 @@ export const router = createBrowserRouter([
       { path: 'basket', Component: Basket },
       { path: 'profile', Component: Profile },
       { path: 'checkout', Component: Checkout },
+      { path: 'messages', Component: Messages },
+      { path: 'notifications', Component: Notifications },
     ],
   },
 ]);
