@@ -111,7 +111,7 @@ const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     id: 'v3',
     videoUrl: staticAsset('/videos/reels3.mp4'),
     thumbnail: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=414&h=896&fit=crop',
-    username: 'fashionista_jane',
+    username: 'itsmehamoon',
     userAvatar: staticAsset('/pics/avatars/avatar4.jpg'),
     likes: 12500,
     comments: 234,
