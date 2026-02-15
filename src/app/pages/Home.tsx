@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+﻿import { useCallback, useMemo, useRef, useState } from 'react';
 import { Bell, Bookmark, Heart, MessageCircle, MessageSquare, Share2, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router';
 import { mockVideos } from '../data/mockData';
@@ -297,6 +297,13 @@ export default function Home() {
                       {!isCaptionExpanded ? (
                         <div>
                           <p className="text-white text-sm leading-5 line-clamp-2">{video.description}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {video.hashtags.slice(0, 3).map((tag, i) => (
+                              <span key={i} className="text-white/90 font-semibold text-xs">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                           <button
                             onClick={() => setExpandedCaptionIndex(index)}
                             className="text-white/90 text-xs font-semibold mt-0.5 hover:text-white transition-colors"
@@ -395,3 +402,4 @@ export default function Home() {
     </>
   );
 }
+

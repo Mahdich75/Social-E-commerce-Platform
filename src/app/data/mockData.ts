@@ -58,16 +58,16 @@ export const mockProducts: Product[] = [
     rating: 4.8,
     reviews: 678,
   },
-  {
+    {
     id: '6',
-    category: 'footwear',
-    name: 'کفش رانینگ',
-    price: 38500000,
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&h=500&fit=crop',
-    description: 'کفش رانینگ سبک و تنفس‌پذیر برای تمرین روزانه و پیاده‌روی طولانی.',
-    sizes: ['40', '41', '42', '43', '44'],
-    rating: 4.4,
-    reviews: 1567,
+    category: 'puzzle',
+    name: 'روبوتایم طرح کافه',
+    price: 24500000,
+    image: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=800&fit=crop',
+    description: 'کیت پازل سه‌بعدی برند روبوتایم با نور LED و دفترچه راهنمای تصویری کامل.',
+    sizes: ['One Size'],
+    rating: 4.8,
+    reviews: 973,
   },
   {
     id: '7',
@@ -145,6 +145,17 @@ export const mockProducts: Product[] = [
     sizes: ['M', 'L', 'XL'],
     rating: 4.6,
     reviews: 333,
+  },
+  {
+    id: '15',
+    category: 'art',
+    name: 'Introduction Video',
+    price: 18900000,
+    image: 'https://images.unsplash.com/photo-1456086272160-b28b0645b729?w=800&h=800&fit=crop',
+    description: 'محصول هنری روبوتایم با تمرکز بر تجربه ساخت، آرامش ذهن و دکور جذاب.',
+    sizes: ['One Size'],
+    rating: 4.9,
+    reviews: 77,
   },
 ];
 
@@ -224,18 +235,19 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     product: mockProducts[6],
     isLive: false,
   },
-  {
+    {
     id: 'v6',
-    videoUrl: staticAsset('/videos/SaveGram.App_AQMtsdUPEMne5RrE9Nl4qV0RO97iOEWmMOo9hcTQHPgsa7SkZruotxzMevR68co5QaA3XjAt0dGdTOViGkjQ4ZEFrwzsSb9n-TS7bpM.mp4'),
-    thumbnail: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=414&h=896&fit=crop',
-    username: 'baghouse_shop',
+    videoUrl: staticAsset('/videos/reels6.mp4'),
+    thumbnail: 'https://images.unsplash.com/photo-1513161455079-7dc1de15ef3e?w=414&h=896&fit=crop',
+    username: 'reyhan_banoo_19',
     userAvatar: staticAsset('/pics/avatars/avatar1.jpg'),
-    likes: 17620,
-    comments: 284,
-    shares: 391,
-    description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
-    hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],    musicTitle: '',
-    product: mockProducts[6],
+    likes: 3582,
+    comments: 973,
+    shares: 286,
+    description: 'میدونی قراره صفر تا صد این کافه رو با دستای خودت بسازی؟🥹🥐 برای دریافت سریع قیمت و مشخصات کلمه «کافه» رو کامنت کن🧋 ✔️وارداتی ✔️دارای بارکد اصالت کالا ✔️از برند محبوب روبوتایم ✔️موجود در ایران ارسال سریع به سراسر کشور پازل های ۳ بعدی ترند این روزها در دنیا…😍 هر چیزی که تو این فیلم میبینید ریز به ریز قطعاتشو خودتون مونتاژ میکنید یه دفترچه راهنمای جامع و کامل تصویری داره که در همه مراحل همراهمتونه و کمکتون می‌کنه🫶🏻 اما قشنگ‌ترین بخشش اینه که LED دارن و وقتی روشنشون میکنید، یه حال‌وهوای گرم و دلنشین به فضای خونه میدن🥹✨🤎 ثبت سفارش از طریق وبسایت و دایرکت💌 لینک سایت در بایو قرار دارد🌐 اشاره: @asal_mahjouri @ava.u1999 @dean_raha',
+    hashtags: ['#کافه', '#کافهرستوران', '#قهوه', '#پازل', '#پازل_هزارتیکه', '#پازل_سه_بعدی', '#مینیاتوری', '#خانه_مینیاتوری', '#بوک_نوک', '#دکوری', '#سرگرمی_فکری', '#ماکت_باز', '#ماکت'],
+    musicTitle: '',
+    product: mockProducts[5],
     isLive: false,
   },
   {
@@ -313,6 +325,21 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     product: mockProducts[6],
     isLive: false,
   },
+  {
+    id: '15',
+    videoUrl: staticAsset('/videos/intro_video.mp4'),
+    thumbnail: 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=414&h=896&fit=crop',
+    username: 'amirafzalzadeh',
+    userAvatar: staticAsset('/pics/avatars/avatar1.jpg'),
+    likes: 584,
+    comments: 77,
+    shares: 63,
+    description: 'هنر جهان را نجات خواهد داد🤝🧵🪡 . بله من هنوز دارم آبی میدوزم💙 و اگه نمیدونی داستان آبی چیه، دوتا پست قبلم رو ببین🫂 . امیدوارم تو هم برای گذر از روزهای سخت و بیحوصله، آبی خودت رو داشته باشی🫂 . مراقب خودت باش❣️ • 1 month ago • @zeynabbanoo508781 @crosstitch_anil @moonlandgate',
+    hashtags: ['#هنر', '#دوخت', '#گلدوزی', '#آرامش', '#هنر_درمانی'],
+    musicTitle: '',
+    product: mockProducts[13],
+    isLive: false,
+  },
 ];
 
 const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [...manualBaseVideos];
@@ -362,4 +389,9 @@ export const reelCommentsFa: Record<string, string[]> = {
   v9: ['لعاب ماگ بعد از شست‌وشو کدر نمی‌شه؟'],
   v10: ['بطری نشتی نداره؟ برای باشگاه عالی به نظر میاد 💪'],
   v11: ['هودی خیلی خوش‌فرمه، رنگ طوسی روشن هم دارید؟'],
+  '15': ['این ویدئوی معرفی حس خیلی خوبی داد، موجودی طرح کافه رو چطور سفارش بدیم؟'] ,
 };
+
+
+
+

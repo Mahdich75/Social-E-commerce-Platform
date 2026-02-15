@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { Settings, Grid, Package, Star, Heart, Video, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useWishlistStore } from '../store/useWishlistStore';
@@ -11,10 +11,9 @@ export default function Profile() {
   const { items: wishlistItems } = useWishlistStore();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductDrawerOpen, setIsProductDrawerOpen] = useState(false);
-  const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(
-    'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4'
-  );
-  const [introVideoName, setIntroVideoName] = useState('intro-video.mp4');
+  const introReel = mockVideos.find((video) => video.id === '15');
+  const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(introReel?.videoUrl ?? null);
+  const [introVideoName, setIntroVideoName] = useState(introReel?.product?.name ?? 'intro_video.mp4');
   const introFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -101,18 +100,23 @@ export default function Profile() {
             </div>
 
             {introVideoUrl ? (
-              <div className="rounded-2xl overflow-hidden border border-zinc-200 bg-black shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
-                <video
-                  src={introVideoUrl}
-                  className="w-full aspect-[16/9] object-cover"
-                  controls
-                  autoPlay
-                  muted
-                  playsInline
-                  loop
-                />
-                <div className="px-3 py-2 bg-zinc-950 text-zinc-200 text-xs truncate">
-                  {introVideoName}
+              <div className="w-full rounded-2xl overflow-hidden border border-zinc-200 bg-black shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+                <div className="w-full aspect-video bg-black">
+                  <video
+                    src={introVideoUrl}
+                    className="w-full h-full object-cover object-[50%_35%]"
+                    controls
+                    autoPlay
+                    muted
+                    playsInline
+                    loop
+                  />
+                </div>
+                <div className="px-3 py-2 bg-zinc-950 text-zinc-200 text-xs">
+                  <p className="font-semibold truncate">{introVideoName}</p>
+                  {introReel && (
+                    <p className="text-zinc-400 mt-1 line-clamp-2">@{introReel.username} • {introReel.description}</p>
+                  )}
                 </div>
               </div>
             ) : (
@@ -303,3 +307,4 @@ export default function Profile() {
     </>
   );
 }
+
