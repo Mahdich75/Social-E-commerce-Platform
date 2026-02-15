@@ -55,9 +55,6 @@ export function BottomNav() {
                   </span>
                 )}
               </div>
-              <span className={`text-[10px] h-3 leading-3 ${isActive ? 'text-white font-semibold' : 'text-zinc-400'}`}>
-                {item.label}
-              </span>
             </Link>
           );
         })}
