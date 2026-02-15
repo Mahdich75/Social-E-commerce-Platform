@@ -21,6 +21,10 @@ interface FeedRow {
 }
 
 const FEATURED_PRODUCT_NAMES = ['پازل سه بعدی', 'ماساژور رباتیک'];
+const DENTAL_LIGHT_PRODUCT_NAME = 'کیت نور دوقلوی دندانپزشکی اوسینو';
+const EVERDELL_PRODUCT_NAME = 'بازی فکری Everdell';
+const BIRD_CAMERA_PRODUCT_NAME = 'دوربین پرنده';
+const HIDDEN_REEL_PRODUCT_NAMES = ['روبوتایم طرح کافه'];
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -58,7 +62,10 @@ export default function Home() {
   }, []);
 
   const baseReels = useMemo(
-    () => mockVideos.map((video) => sanitizedVideoById[video.id] ?? video),
+    () =>
+      mockVideos
+        .map((video) => sanitizedVideoById[video.id] ?? video)
+        .filter((video) => !HIDDEN_REEL_PRODUCT_NAMES.includes(video.product?.name ?? '')),
     [sanitizedVideoById]
   );
 
@@ -167,7 +174,81 @@ export default function Home() {
         return rankA - rankB;
       });
 
-    return [...sortFeatured(featuredRows), ...conceptRows, ...multiReelRows];
+    const orderedRows: FeedRow[] = [...sortFeatured(featuredRows), ...conceptRows, ...multiReelRows];
+    const moveToLastRowProductNames = [DENTAL_LIGHT_PRODUCT_NAME, BIRD_CAMERA_PRODUCT_NAME];
+    const movedLastRowReels: VideoFeed[] = [];
+
+    const rowsWithoutMovedLast = orderedRows
+      .map((row) => {
+        const reels = row.reels.filter((video) => {
+          const shouldMoveToLast = moveToLastRowProductNames.includes(video.product?.name ?? '');
+          if (shouldMoveToLast) movedLastRowReels.push(video);
+          return !shouldMoveToLast;
+        });
+        return { ...row, reels };
+      })
+      .filter((row) => row.reels.length > 0);
+
+    const rowsAfterLastMove =
+      movedLastRowReels.length === 0
+        ? rowsWithoutMovedLast
+        : rowsWithoutMovedLast.length === 0
+          ? [
+              {
+                rowId: 'moved-dental-row',
+                kind: 'concept',
+                reels: movedLastRowReels,
+              } satisfies FeedRow,
+            ]
+          : rowsWithoutMovedLast.map((row, rowIndex, allRows) => {
+              if (rowIndex !== allRows.length - 1) return row;
+              return {
+                ...row,
+                reels: [...row.reels, ...movedLastRowReels],
+              };
+            });
+
+    const moveToFirstRowProductNames = [EVERDELL_PRODUCT_NAME];
+    const prioritizedReels: VideoFeed[] = [];
+    const rowsWithoutPrioritized = rowsAfterLastMove
+      .map((row) => {
+        const reels = row.reels.filter((video) => {
+          const productName = video.product?.name;
+          const shouldMoveToFirstRow = productName ? moveToFirstRowProductNames.includes(productName) : false;
+          if (shouldMoveToFirstRow) prioritizedReels.push(video);
+          return !shouldMoveToFirstRow;
+        });
+        return { ...row, reels };
+      })
+      .filter((row) => row.reels.length > 0);
+
+    if (prioritizedReels.length === 0) {
+      return rowsAfterLastMove;
+    }
+
+    if (rowsWithoutPrioritized.length === 0) {
+      return [
+        {
+          rowId: 'moved-priority-row',
+          kind: 'concept',
+          reels: prioritizedReels,
+        },
+      ];
+    }
+
+    const sortedPrioritized = prioritizedReels.slice().sort((a, b) => {
+      const rankA = moveToFirstRowProductNames.indexOf(a.product?.name ?? '');
+      const rankB = moveToFirstRowProductNames.indexOf(b.product?.name ?? '');
+      return rankA - rankB;
+    });
+
+    const firstRow = rowsWithoutPrioritized[0];
+    rowsWithoutPrioritized[0] = {
+      ...firstRow,
+      reels: [...firstRow.reels, ...sortedPrioritized],
+    };
+
+    return rowsWithoutPrioritized;
   }, [baseReels]);
 
   const activeRow = productRows[activeIndex];
@@ -364,7 +445,7 @@ export default function Home() {
                   style={{ touchAction: 'auto', WebkitOverflowScrolling: 'touch' }}
                 >
                   {row.reels.map((video, reelIndex) => {
-                    const currentProduct = row.product ?? video.product;
+                    const currentProduct = video.product ?? row.product;
                     const currentIsLiked = isLiked(video.id);
                     const isWishlisted = currentProduct
                       ? wishlistItems.some((item) => item.product.id === currentProduct.id)
