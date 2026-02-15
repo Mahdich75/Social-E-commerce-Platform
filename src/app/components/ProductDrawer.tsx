@@ -5,6 +5,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } f
 import { Button } from './ui/button';
 import { Star, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatPriceToman } from '../utils/price';
 
 interface ProductDrawerProps {
   product: Product | null;
@@ -63,7 +64,7 @@ export function ProductDrawer({ product, open, onOpenChange }: ProductDrawerProp
 
           {/* Price */}
           <div className="flex items-center justify-between">
-            <span className="text-3xl font-bold">${product.price}</span>
+            <span className="text-3xl font-bold">{formatPriceToman(product.price)}</span>
           </div>
 
           {/* Description */}

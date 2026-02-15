@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router';
 import { useBasketStore } from '../store/useBasketStore';
 import { Button } from '../components/ui/button';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { formatPriceToman } from '../utils/price';
 
 export default function Basket() {
   const navigate = useNavigate();
@@ -36,7 +37,10 @@ export default function Basket() {
       {/* Basket Items */}
       <div className="px-4 py-6 space-y-4">
         {items.map((item) => (
-          <div key={`${item.product.id}-${item.selectedSize}-${item.selectedColor}`} className="flex gap-4 bg-white border border-zinc-200 rounded-xl p-4">
+          <div
+            key={`${item.product.id}-${item.selectedSize}-${item.selectedColor}`}
+            className="flex gap-4 bg-white/60 backdrop-blur-md border border-white/40 rounded-xl p-4 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+          >
             {/* Product Image */}
             <div className="w-24 h-24 bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0">
               <img
@@ -59,7 +63,7 @@ export default function Basket() {
               </div>
 
               {/* Price */}
-              <p className="text-lg font-bold mb-3">${item.product.price}</p>
+              <p className="text-lg font-bold mb-3">{formatPriceToman(item.product.price)}</p>
 
               {/* Quantity Controls */}
               <div className="flex items-center justify-between">
@@ -96,7 +100,7 @@ export default function Basket() {
         <div className="space-y-3 mb-4">
           <div className="flex justify-between text-sm">
             <span className="text-zinc-600">Subtotal</span>
-            <span className="font-semibold">${getTotalPrice().toFixed(2)}</span>
+            <span className="font-semibold">{formatPriceToman(getTotalPrice())}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-zinc-600">Shipping</span>
@@ -104,7 +108,7 @@ export default function Basket() {
           </div>
           <div className="border-t border-zinc-200 pt-3 flex justify-between">
             <span className="font-bold text-lg">Total</span>
-            <span className="font-bold text-lg">${getTotalPrice().toFixed(2)}</span>
+            <span className="font-bold text-lg">{formatPriceToman(getTotalPrice())}</span>
           </div>
         </div>
 

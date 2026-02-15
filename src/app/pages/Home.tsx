@@ -11,6 +11,7 @@ import { useWishlistStore } from '../store/useWishlistStore';
 import { Product, VideoFeed } from '../types';
 import { toast } from 'sonner';
 import { sanitizeCaptionText } from '../utils/sanitizeCaption';
+import { formatPriceToman } from '../utils/price';
 
 export default function Home() {
   const [feedReels, setFeedReels] = useState<VideoFeed[]>(mockVideos);
@@ -334,7 +335,7 @@ export default function Home() {
                   {currentProduct && (
                     <button
                       onClick={() => handleProductClick(currentProduct)}
-                      className="inline-flex items-center gap-2.5 bg-white/90 backdrop-blur-sm px-3 py-2.5 rounded-xl shadow-lg pointer-events-auto max-w-[calc(100%-6rem)]"
+                      className="inline-flex items-center gap-2.5 bg-white/30 backdrop-blur-md px-3 py-2.5 rounded-xl border border-white/35 shadow-[0_10px_28px_rgba(0,0,0,0.18)] pointer-events-auto max-w-[calc(100%-6rem)]"
                     >
                       <img
                         src={currentProduct.image}
@@ -343,7 +344,7 @@ export default function Home() {
                       />
                       <div className="text-left">
                         <p className="font-semibold text-xs leading-4 line-clamp-1">{currentProduct.name}</p>
-                        <p className="text-sm font-bold mt-0.5">${currentProduct.price}</p>
+                        <p className="text-sm font-bold mt-0.5">{formatPriceToman(currentProduct.price)}</p>
                       </div>
                       <ShoppingBag className="w-4 h-4 ml-1" />
                     </button>
@@ -355,28 +356,29 @@ export default function Home() {
         </div>
 
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[414px] z-30 bg-gradient-to-b from-black/55 to-transparent pt-[max(env(safe-area-inset-top),0.5rem)] pb-3 pointer-events-none">
-          <div className="relative flex items-center justify-center px-4">
-            <div className="flex items-center gap-4 pointer-events-auto">
-              <button className="text-white/60 text-[15px] font-semibold">Following</button>
-              <div className="w-px h-3 bg-white/25" />
-              <button className="text-white text-[17px] font-bold">For You</button>
-            </div>
-
-            <div className="absolute right-2 top-0 flex items-center gap-1 pointer-events-auto">
-              <Link
-                to="/messages"
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                aria-label="Open messages"
-              >
-                <MessageSquare className="w-6 h-6 text-white" />
-              </Link>
+          <div className="px-4">
+            <div className="flex items-center justify-between pointer-events-auto">
               <Link
                 to="/notifications"
-                className="p-2 hover:bg-white/10 rounded-full transition-colors relative"
+                className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors relative"
                 aria-label="Open notifications"
               >
                 <Bell className="w-6 h-6 text-white" />
-                <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-black" />
+                <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-black" />
+              </Link>
+
+              <div className="flex items-center gap-4">
+                <button className="text-white/60 text-[15px] font-semibold">Following</button>
+                <div className="w-px h-3 bg-white/25" />
+                <button className="text-white text-[17px] font-bold">For You</button>
+              </div>
+
+              <Link
+                to="/messages"
+                className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
+                aria-label="Open messages"
+              >
+                <MessageSquare className="w-6 h-6 text-white" />
               </Link>
             </div>
           </div>

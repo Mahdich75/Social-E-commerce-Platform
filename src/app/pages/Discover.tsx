@@ -4,6 +4,7 @@ import { mockProducts } from '../data/mockData';
 import { Product } from '../types';
 import { ProductDrawer } from '../components/ProductDrawer';
 import { Input } from '../components/ui/input';
+import { formatPriceToman } from '../utils/price';
 
 export default function Discover() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -78,7 +79,7 @@ export default function Discover() {
                 <button
                   key={product.id}
                   onClick={() => handleProductClick(product)}
-                  className="bg-white rounded-xl overflow-hidden border border-zinc-200 hover:border-black transition-colors text-left"
+                  className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden border border-white/35 shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:bg-white/40 transition-colors text-left"
                 >
                   {/* Product Image */}
                   <div className="aspect-square bg-zinc-100 relative overflow-hidden">
@@ -105,7 +106,7 @@ export default function Discover() {
                     )}
 
                     {/* Price */}
-                    <p className="text-base font-bold">${product.price}</p>
+                    <p className="text-base font-bold">{formatPriceToman(product.price)}</p>
                   </div>
                 </button>
               ))}

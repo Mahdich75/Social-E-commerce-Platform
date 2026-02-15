@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
+import { formatPriceToman } from '../utils/price';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ export default function Checkout() {
         {/* Order Summary */}
         <div>
           <h2 className="text-lg font-bold mb-4">Order Summary</h2>
-          <div className="bg-zinc-50 rounded-xl p-4 space-y-3">
+          <div className="bg-white/60 backdrop-blur-md border border-white/40 rounded-xl p-4 space-y-3 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
             {items.map((item) => (
               <div key={`${item.product.id}-${item.selectedSize}`} className="flex gap-3">
                 <img
@@ -88,7 +89,7 @@ export default function Checkout() {
                   <p className="text-xs text-zinc-600">
                     Qty: {item.quantity} {item.selectedSize && `• Size: ${item.selectedSize}`}
                   </p>
-                  <p className="font-semibold text-sm mt-1">${item.product.price}</p>
+                  <p className="font-semibold text-sm mt-1">{formatPriceToman(item.product.price)}</p>
                 </div>
               </div>
             ))}
@@ -182,7 +183,7 @@ export default function Checkout() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-zinc-600">Subtotal</span>
-              <span className="font-semibold">${getTotalPrice().toFixed(2)}</span>
+              <span className="font-semibold">{formatPriceToman(getTotalPrice())}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-zinc-600">Delivery Fee</span>
@@ -190,11 +191,11 @@ export default function Checkout() {
             </div>
             <div className="flex justify-between">
               <span className="text-zinc-600">Tax</span>
-              <span className="font-semibold">${(getTotalPrice() * 0.08).toFixed(2)}</span>
+              <span className="font-semibold">{formatPriceToman(getTotalPrice() * 0.08)}</span>
             </div>
             <div className="border-t border-zinc-200 pt-3 flex justify-between text-base">
               <span className="font-bold">Total</span>
-              <span className="font-bold">${(getTotalPrice() * 1.08).toFixed(2)}</span>
+              <span className="font-bold">{formatPriceToman(getTotalPrice() * 1.08)}</span>
             </div>
           </div>
         </div>
@@ -206,7 +207,7 @@ export default function Checkout() {
           onClick={handlePlaceOrder}
           className="w-full bg-black text-white hover:bg-zinc-800 h-12 text-base font-semibold rounded-xl"
         >
-          Place Order • ${(getTotalPrice() * 1.08).toFixed(2)}
+          Place Order • {formatPriceToman(getTotalPrice() * 1.08)}
         </Button>
       </div>
     </div>

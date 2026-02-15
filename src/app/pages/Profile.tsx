@@ -5,6 +5,7 @@ import { useWishlistStore } from '../store/useWishlistStore';
 import { ProductDrawer } from '../components/ProductDrawer';
 import { Product } from '../types';
 import { mockVideos } from '../data/mockData';
+import { formatPriceToman } from '../utils/price';
 
 export default function Profile() {
   const { items: wishlistItems } = useWishlistStore();
@@ -199,7 +200,7 @@ export default function Profile() {
                 <button
                   key={video.id}
                   onClick={() => video.product && handleWishlistItemClick(video.product)}
-                  className="bg-white rounded-xl overflow-hidden border border-zinc-200 hover:border-black transition-colors text-left"
+                  className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden border border-white/35 shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:bg-white/40 transition-colors text-left"
                 >
                   <div className="aspect-square bg-zinc-100 relative overflow-hidden">
                     <img
@@ -212,7 +213,7 @@ export default function Profile() {
                     <h3 className="font-semibold text-sm line-clamp-2 mb-1">
                       {video.product!.name}
                     </h3>
-                    <p className="text-base font-bold">${video.product!.price}</p>
+                    <p className="text-base font-bold">{formatPriceToman(video.product!.price)}</p>
                   </div>
                 </button>
               ))}
@@ -269,7 +270,7 @@ export default function Profile() {
                 <button
                   key={item.product.id}
                   onClick={() => handleWishlistItemClick(item.product)}
-                  className="bg-white rounded-xl overflow-hidden border border-zinc-200 hover:border-black transition-colors text-left"
+                  className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden border border-white/35 shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:bg-white/40 transition-colors text-left"
                 >
                   <div className="aspect-square bg-zinc-100 relative overflow-hidden">
                     <img
@@ -285,7 +286,7 @@ export default function Profile() {
                     <h3 className="font-semibold text-sm line-clamp-2 mb-1">
                       {item.product.name}
                     </h3>
-                    <p className="text-base font-bold">${item.product.price}</p>
+                    <p className="text-base font-bold">{formatPriceToman(item.product.price)}</p>
                   </div>
                 </button>
               ))}
