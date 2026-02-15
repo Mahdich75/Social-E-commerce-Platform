@@ -36,6 +36,9 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const horizontalRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const touchStateRef = useRef<
+    Record<number, { startX: number; startY: number; startScrollLeft: number; lockedAxis: 'x' | 'y' | null }>
+  >({});
 
   const { addToBasket } = useBasketStore();
   const { toggleLike, isLiked } = useReelStore();
@@ -176,12 +179,11 @@ export default function Home() {
 
   const isNearViewport = useCallback(
     (rowIndex: number, horizontalIndex: number) => {
-      const verticalDistance = Math.abs(rowIndex - activeIndex);
-      if (verticalDistance > 1) return false;
-      if (rowIndex !== activeIndex) return horizontalIndex === 0;
-      return Math.abs(horizontalIndex - activeHorizontal) <= 1;
+      if (Math.abs(rowIndex - activeIndex) > 1) return false;
+      const rowPosition = horizontalPositions[rowIndex] ?? 0;
+      return Math.abs(horizontalIndex - rowPosition) <= 1;
     },
-    [activeHorizontal, activeIndex]
+    [activeIndex, horizontalPositions]
   );
 
   const preloadNearby = useCallback((reels: VideoFeed[]) => {
@@ -220,6 +222,55 @@ export default function Home() {
     });
   }, []);
 
+  const handleRowTouchStart = useCallback((rowIndex: number, e: React.TouchEvent<HTMLDivElement>) => {
+    const container = horizontalRefs.current[rowIndex];
+    if (!container) return;
+    const touch = e.touches[0];
+    touchStateRef.current[rowIndex] = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      startScrollLeft: container.scrollLeft,
+      lockedAxis: null,
+    };
+  }, []);
+
+  const handleRowTouchMove = useCallback((rowIndex: number, e: React.TouchEvent<HTMLDivElement>) => {
+    const state = touchStateRef.current[rowIndex];
+    const container = horizontalRefs.current[rowIndex];
+    if (!state || !container) return;
+
+    const touch = e.touches[0];
+    const dx = touch.clientX - state.startX;
+    const dy = touch.clientY - state.startY;
+    const threshold = 12;
+
+    if (!state.lockedAxis && (Math.abs(dx) > threshold || Math.abs(dy) > threshold)) {
+      state.lockedAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      touchStateRef.current[rowIndex] = state;
+    }
+
+    if (state.lockedAxis !== 'x') return;
+
+    e.preventDefault();
+    container.scrollLeft = state.startScrollLeft - dx;
+  }, []);
+
+  const handleRowTouchEnd = useCallback((rowIndex: number) => {
+    const state = touchStateRef.current[rowIndex];
+    const container = horizontalRefs.current[rowIndex];
+    if (!state || !container) return;
+
+    if (state.lockedAxis === 'x' && container.clientWidth > 0) {
+      const snapIndex = Math.round(container.scrollLeft / container.clientWidth);
+      container.scrollTo({
+        left: snapIndex * container.clientWidth,
+        behavior: 'smooth',
+      });
+    }
+
+    delete touchStateRef.current[rowIndex];
+  }, []);
+
   useEffect(() => {
     const row = productRows[activeIndex];
     if (!row) return;
@@ -241,6 +292,25 @@ export default function Home() {
       nearby.filter((candidate, index, all) => all.findIndex((item) => item.id === candidate.id) === index)
     );
   }, [activeIndex, activeVideo, horizontalPositions, preloadNearby, productRows]);
+
+  useEffect(() => {
+    const extra: VideoFeed[] = [];
+    [activeIndex - 1, activeIndex + 1].forEach((rowIndex) => {
+      const row = productRows[rowIndex];
+      if (!row) return;
+      const rowPos = horizontalPositions[rowIndex] ?? 0;
+      const center = row.reels[rowPos];
+      const left = row.reels[rowPos - 1];
+      const right = row.reels[rowPos + 1];
+      if (center) extra.push(center);
+      if (left) extra.push(left);
+      if (right) extra.push(right);
+    });
+
+    preloadNearby(
+      extra.filter((candidate, index, all) => all.findIndex((item) => item.id === candidate.id) === index)
+    );
+  }, [activeIndex, horizontalPositions, preloadNearby, productRows]);
 
   useEffect(() => {
     const container = horizontalRefs.current[activeIndex];
@@ -330,7 +400,7 @@ export default function Home() {
           ref={scrollRef}
           onScroll={handleVerticalScroll}
           className="absolute inset-0 overflow-y-auto snap-y snap-mandatory overscroll-y-contain"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
         >
           {productRows.map((row, rowIndex) => {
             const rowHorizontalPos = horizontalPositions[rowIndex] ?? 0;
@@ -342,8 +412,12 @@ export default function Home() {
                     horizontalRefs.current[rowIndex] = el;
                   }}
                   onScroll={(e) => handleHorizontalScroll(rowIndex, e)}
+                  onTouchStart={(e) => handleRowTouchStart(rowIndex, e)}
+                  onTouchMove={(e) => handleRowTouchMove(rowIndex, e)}
+                  onTouchEnd={() => handleRowTouchEnd(rowIndex)}
+                  onTouchCancel={() => handleRowTouchEnd(rowIndex)}
                   className="absolute inset-0 overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex overscroll-x-contain"
-                  style={{ touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}
+                  style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
                 >
                   {row.reels.map((video, reelIndex) => {
                     const currentProduct = row.product ?? video.product;
