@@ -13,6 +13,15 @@ import { toast } from 'sonner';
 import { sanitizeCaptionText } from '../utils/sanitizeCaption';
 import { formatPriceToman } from '../utils/price';
 
+interface FeedRow {
+  rowId: string;
+  product?: Product;
+  kind: 'product' | 'concept';
+  reels: VideoFeed[];
+}
+
+const FEATURED_PRODUCT_NAMES = ['پازل سه بعدی', 'ماساژور رباتیک'];
+
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -53,50 +62,126 @@ export default function Home() {
     [sanitizedVideoById]
   );
 
-  const similarPools = useMemo(() => {
-    return baseReels.map((current) => {
-      const currentProduct = current.product;
-      if (!currentProduct) return [current];
+  const productRows = useMemo<FeedRow[]>(() => {
+    const groupedByProduct = new Map<string, VideoFeed[]>();
+    const noProductVideos: VideoFeed[] = [];
 
-      const sameProduct = baseReels.filter(
-        (candidate) => candidate.id !== current.id && candidate.product?.id === currentProduct.id
-      );
-      const sameCategory = baseReels.filter(
-        (candidate) =>
-          candidate.id !== current.id &&
-          candidate.product?.id !== currentProduct.id &&
-          candidate.product?.category === currentProduct.category
-      );
-      const predefined = (current.similarReels ?? [])
-        .map((reel) => sanitizedVideoById[reel.id] ?? reel)
-        .filter((candidate) => candidate.id !== current.id);
+    baseReels.forEach((video) => {
+      const productId = video.product?.id;
+      if (!productId) {
+        noProductVideos.push(video);
+        return;
+      }
 
-      return [current, ...sameProduct, ...sameCategory, ...predefined].filter(
-        (candidate, index, all) => all.findIndex((item) => item.id === candidate.id) === index
-      );
+      const existing = groupedByProduct.get(productId);
+      if (existing) {
+        existing.push(video);
+      } else {
+        groupedByProduct.set(productId, [video]);
+      }
     });
-  }, [baseReels, sanitizedVideoById]);
 
-  const getReelAt = useCallback(
-    (verticalIndex: number) => {
-      const pool = similarPools[verticalIndex] ?? [];
-      const position = horizontalPositions[verticalIndex] ?? 0;
-      return pool[position] ?? pool[0] ?? baseReels[verticalIndex];
-    },
-    [baseReels, horizontalPositions, similarPools]
-  );
+    const productRowsRaw: FeedRow[] = Array.from(groupedByProduct.entries()).map(([productId, reels]) => ({
+      rowId: `product-${productId}`,
+      kind: 'product',
+      product: reels[0]?.product,
+      reels,
+    }));
 
-  const activeVideo = getReelAt(activeIndex) ?? baseReels[0];
+    const featuredRows = productRowsRaw.filter((row) => FEATURED_PRODUCT_NAMES.includes(row.product?.name ?? ''));
+    const nonFeaturedRows = productRowsRaw.filter((row) => !FEATURED_PRODUCT_NAMES.includes(row.product?.name ?? ''));
+
+    const singleReelRows = nonFeaturedRows.filter((row) => row.reels.length === 1);
+    const multiReelRows = nonFeaturedRows.filter((row) => row.reels.length > 1);
+
+    const conceptCandidates = [...singleReelRows.flatMap((row) => row.reels), ...noProductVideos];
+
+    const hasConceptMatch = (source: VideoFeed, candidate: VideoFeed) => {
+      if (source.id === candidate.id) return false;
+
+      const sourceProductId = source.product?.id;
+      const candidateProductId = candidate.product?.id;
+      if (sourceProductId && candidateProductId && sourceProductId === candidateProductId) return false;
+
+      const sourceSimilarIds = new Set((source.similarReels ?? []).map((reel) => reel.id));
+      const candidateSimilarIds = new Set((candidate.similarReels ?? []).map((reel) => reel.id));
+      if (sourceSimilarIds.has(candidate.id) || candidateSimilarIds.has(source.id)) return true;
+
+      const sourceTags = new Set((source.hashtags ?? []).map((tag) => tag.toLowerCase()));
+      const candidateTags = (candidate.hashtags ?? []).map((tag) => tag.toLowerCase());
+      const overlap = candidateTags.reduce((count, tag) => (sourceTags.has(tag) ? count + 1 : count), 0);
+      if (overlap >= 2) return true;
+
+      const sourceCategory = source.product?.category ?? '';
+      const candidateCategory = candidate.product?.category ?? '';
+      if (!sourceCategory || !candidateCategory) return false;
+
+      const normalizeCategory = (value: string) => value.split('/')[0].trim().toLowerCase();
+      return normalizeCategory(sourceCategory) === normalizeCategory(candidateCategory);
+    };
+
+    const conceptRows: FeedRow[] = [];
+    const visited = new Set<string>();
+
+    conceptCandidates.forEach((video) => {
+      if (visited.has(video.id)) return;
+
+      const queue = [video];
+      const grouped: VideoFeed[] = [];
+      visited.add(video.id);
+
+      while (queue.length > 0) {
+        const current = queue.shift();
+        if (!current) continue;
+        grouped.push(current);
+
+        conceptCandidates.forEach((candidate) => {
+          if (visited.has(candidate.id)) return;
+          if (!hasConceptMatch(current, candidate)) return;
+          visited.add(candidate.id);
+          queue.push(candidate);
+        });
+      }
+
+      if (grouped.length > 1) {
+        conceptRows.push({
+          rowId: `concept-${video.id}`,
+          kind: 'concept',
+          reels: grouped,
+        });
+      } else {
+        const single = grouped[0];
+        conceptRows.push({
+          rowId: `single-${single.id}`,
+          kind: 'product',
+          product: single.product,
+          reels: [single],
+        });
+      }
+    });
+
+    const sortFeatured = (rows: FeedRow[]) =>
+      rows.slice().sort((a, b) => {
+        const rankA = FEATURED_PRODUCT_NAMES.indexOf(a.product?.name ?? '');
+        const rankB = FEATURED_PRODUCT_NAMES.indexOf(b.product?.name ?? '');
+        return rankA - rankB;
+      });
+
+    return [...sortFeatured(featuredRows), ...conceptRows, ...multiReelRows];
+  }, [baseReels]);
+
+  const activeRow = productRows[activeIndex];
+  const activeHorizontal = horizontalPositions[activeIndex] ?? 0;
+  const activeVideo = activeRow?.reels[activeHorizontal] ?? activeRow?.reels[0] ?? baseReels[0];
 
   const isNearViewport = useCallback(
-    (verticalIndex: number, horizontalIndex: number) => {
-      const activeHorizontal = horizontalPositions[activeIndex] ?? 0;
-      const verticalDistance = Math.abs(verticalIndex - activeIndex);
+    (rowIndex: number, horizontalIndex: number) => {
+      const verticalDistance = Math.abs(rowIndex - activeIndex);
       if (verticalDistance > 1) return false;
-      if (verticalIndex !== activeIndex) return horizontalIndex === 0;
+      if (rowIndex !== activeIndex) return horizontalIndex === 0;
       return Math.abs(horizontalIndex - activeHorizontal) <= 1;
     },
-    [activeIndex, horizontalPositions]
+    [activeHorizontal, activeIndex]
   );
 
   const preloadNearby = useCallback((reels: VideoFeed[]) => {
@@ -115,36 +200,47 @@ export default function Home() {
       const viewportHeight = target.clientHeight;
       if (!viewportHeight) return;
 
-      const nextIndex = Math.max(0, Math.min(baseReels.length - 1, Math.round(target.scrollTop / viewportHeight)));
+      const nextIndex = Math.max(0, Math.min(productRows.length - 1, Math.round(target.scrollTop / viewportHeight)));
       if (nextIndex !== activeIndex) {
         setActiveIndex(nextIndex);
         setExpandedCaptionKey(null);
       }
     },
-    [activeIndex, baseReels.length]
+    [activeIndex, productRows.length]
   );
 
-  const handleHorizontalScroll = useCallback((verticalIndex: number, e: React.UIEvent<HTMLDivElement>) => {
+  const handleHorizontalScroll = useCallback((rowIndex: number, e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
     if (!target.clientWidth) return;
     const nextPos = Math.round(target.scrollLeft / target.clientWidth);
 
     setHorizontalPositions((prev) => {
-      if ((prev[verticalIndex] ?? 0) === nextPos) return prev;
-      return { ...prev, [verticalIndex]: nextPos };
+      if ((prev[rowIndex] ?? 0) === nextPos) return prev;
+      return { ...prev, [rowIndex]: nextPos };
     });
   }, []);
 
   useEffect(() => {
-    const pool = similarPools[activeIndex] ?? [];
+    const row = productRows[activeIndex];
+    if (!row) return;
+
     const position = horizontalPositions[activeIndex] ?? 0;
     const nearby: VideoFeed[] = [];
 
-    if (pool[position - 1]) nearby.push(pool[position - 1]);
-    if (pool[position + 1]) nearby.push(pool[position + 1]);
+    if (row.reels[position - 1]) nearby.push(row.reels[position - 1]);
+    if (row.reels[position + 1]) nearby.push(row.reels[position + 1]);
 
-    preloadNearby(nearby);
-  }, [activeIndex, horizontalPositions, preloadNearby, similarPools]);
+    const similar = activeVideo?.similarReels ?? [];
+    const rowVideoIds = new Set(row.reels.map((video) => video.id));
+    similar
+      .filter((video) => rowVideoIds.has(video.id))
+      .slice(0, 2)
+      .forEach((video) => nearby.push(video));
+
+    preloadNearby(
+      nearby.filter((candidate, index, all) => all.findIndex((item) => item.id === candidate.id) === index)
+    );
+  }, [activeIndex, activeVideo, horizontalPositions, preloadNearby, productRows]);
 
   useEffect(() => {
     const container = horizontalRefs.current[activeIndex];
@@ -157,11 +253,10 @@ export default function Home() {
   }, [activeIndex, horizontalPositions]);
 
   useEffect(() => {
-    const activeHorizontal = horizontalPositions[activeIndex] ?? 0;
     Object.entries(videoRefs.current).forEach(([key, video]) => {
       if (!video) return;
-      const [vIdx, hIdx] = key.split('-').map((value) => Number(value));
-      const shouldPlay = vIdx === activeIndex && hIdx === activeHorizontal;
+      const [rowIdx, reelIdx] = key.split('-').map((value) => Number(value));
+      const shouldPlay = rowIdx === activeIndex && reelIdx === activeHorizontal;
       video.muted = isMuted;
       video.volume = globalVolume;
 
@@ -171,7 +266,7 @@ export default function Home() {
         video.pause();
       }
     });
-  }, [activeIndex, horizontalPositions, isMuted]);
+  }, [activeHorizontal, activeIndex, isMuted]);
 
   useEffect(() => {
     if (!activeVideo?.id) return;
@@ -230,49 +325,48 @@ export default function Home() {
 
   return (
     <>
-      <div className="relative w-full h-screen overflow-hidden bg-black" style={{ touchAction: 'pan-y' }}>
+      <div className="relative w-full h-screen overflow-hidden bg-black">
         <div
           ref={scrollRef}
           onScroll={handleVerticalScroll}
           className="absolute inset-0 overflow-y-auto snap-y snap-mandatory overscroll-y-contain"
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+          style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          {baseReels.map((_, verticalIndex) => {
-            const pool = similarPools[verticalIndex] ?? [];
-            const horizontalPos = horizontalPositions[verticalIndex] ?? 0;
+          {productRows.map((row, rowIndex) => {
+            const rowHorizontalPos = horizontalPositions[rowIndex] ?? 0;
 
             return (
-              <section key={`v-${verticalIndex}`} className="relative h-screen snap-start overflow-hidden">
+              <section key={`row-${row.rowId}`} className="relative h-screen snap-start overflow-hidden">
                 <div
                   ref={(el) => {
-                    horizontalRefs.current[verticalIndex] = el;
+                    horizontalRefs.current[rowIndex] = el;
                   }}
-                  onScroll={(e) => handleHorizontalScroll(verticalIndex, e)}
+                  onScroll={(e) => handleHorizontalScroll(rowIndex, e)}
                   className="absolute inset-0 overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex overscroll-x-contain"
-                  style={{ touchAction: 'auto', WebkitOverflowScrolling: 'touch' }}
+                  style={{ touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}
                 >
-                  {pool.map((video, horizontalIndex) => {
-                    const currentProduct = video.product;
+                  {row.reels.map((video, reelIndex) => {
+                    const currentProduct = row.product ?? video.product;
                     const currentIsLiked = isLiked(video.id);
                     const isWishlisted = currentProduct
                       ? wishlistItems.some((item) => item.product.id === currentProduct.id)
                       : false;
-                    const captionKey = `${verticalIndex}-${horizontalIndex}`;
+                    const captionKey = `${rowIndex}-${reelIndex}`;
                     const isCaptionExpanded = expandedCaptionKey === captionKey;
 
                     return (
-                      <article key={`${video.id}-${horizontalIndex}`} className="relative h-full w-full shrink-0 snap-start overflow-hidden">
+                      <article key={`${video.id}-${reelIndex}`} className="relative h-full w-full shrink-0 snap-start overflow-hidden">
                         <video
                           ref={(el) => {
-                            videoRefs.current[`${verticalIndex}-${horizontalIndex}`] = el;
+                            videoRefs.current[`${rowIndex}-${reelIndex}`] = el;
                           }}
                           src={video.videoUrl}
                           className="absolute inset-0 w-full h-full object-cover"
-                          autoPlay={verticalIndex === activeIndex && horizontalIndex === horizontalPos}
+                          autoPlay={rowIndex === activeIndex && reelIndex === rowHorizontalPos}
                           muted={isMuted}
                           loop
                           playsInline
-                          preload={isNearViewport(verticalIndex, horizontalIndex) ? 'metadata' : 'none'}
+                          preload={isNearViewport(rowIndex, reelIndex) ? 'metadata' : 'none'}
                           onLoadedMetadata={(e) => {
                             e.currentTarget.volume = globalVolume;
                           }}
@@ -280,7 +374,7 @@ export default function Home() {
                         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/45 pointer-events-none" />
 
                         {video.isLive && (
-                          <div className="absolute top-12 left-4 z-20 pointer-events-none">
+                          <div className="absolute top-28 left-4 z-20 pointer-events-none">
                             <div className="flex items-center gap-2 bg-red-500 px-3 py-1.5 rounded-md">
                               <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                               <span className="text-white text-sm font-bold">LIVE</span>
@@ -288,7 +382,7 @@ export default function Home() {
                           </div>
                         )}
 
-                        <div className="absolute right-0 top-[54%] -translate-y-1/2 w-20 flex flex-col items-center gap-4 z-30 pointer-events-none">
+                        <div className="absolute right-0 top-[56%] -translate-y-1/2 w-20 flex flex-col items-center gap-4 z-30 pointer-events-none">
                           <div className="relative">
                             <img src={video.userAvatar} alt={video.username} className="w-11 h-11 rounded-full border-2 border-white" />
                             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-black">
