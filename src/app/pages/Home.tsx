@@ -37,7 +37,17 @@ export default function Home() {
   const horizontalRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const pointerStateRef = useRef<
-    Record<number, { startX: number; startY: number; startScrollLeft: number; lockedAxis: 'x' | 'y' | null; pointerId: number }>
+    Record<
+      number,
+      {
+        startX: number;
+        startY: number;
+        startScrollLeft: number;
+        lockedAxis: 'x' | 'y' | null;
+        pointerId: number;
+        captured: boolean;
+      }
+    >
   >({});
 
   const { addToBasket } = useBasketStore();
@@ -225,13 +235,13 @@ export default function Home() {
   const handleRowPointerDown = useCallback((rowIndex: number, e: React.PointerEvent<HTMLDivElement>) => {
     const container = horizontalRefs.current[rowIndex];
     if (!container) return;
-    container.setPointerCapture(e.pointerId);
     pointerStateRef.current[rowIndex] = {
       startX: e.clientX,
       startY: e.clientY,
       startScrollLeft: container.scrollLeft,
       lockedAxis: null,
       pointerId: e.pointerId,
+      captured: false,
     };
   }, []);
 
@@ -242,14 +252,25 @@ export default function Home() {
 
     const dx = e.clientX - state.startX;
     const dy = e.clientY - state.startY;
-    const threshold = 12;
+    const lockThreshold = 6;
 
-    if (!state.lockedAxis && (Math.abs(dx) > threshold || Math.abs(dy) > threshold)) {
+    if (!state.lockedAxis && (Math.abs(dx) > lockThreshold || Math.abs(dy) > lockThreshold)) {
       state.lockedAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
       pointerStateRef.current[rowIndex] = state;
     }
 
-    if (state.lockedAxis !== 'x') return;
+    if (state.lockedAxis !== 'x') {
+      if (state.lockedAxis === 'y') {
+        delete pointerStateRef.current[rowIndex];
+      }
+      return;
+    }
+
+    if (!state.captured) {
+      container.setPointerCapture(e.pointerId);
+      state.captured = true;
+      pointerStateRef.current[rowIndex] = state;
+    }
 
     e.preventDefault();
     container.scrollLeft = state.startScrollLeft - dx;
@@ -268,7 +289,9 @@ export default function Home() {
       });
     }
 
-    container.releasePointerCapture(e.pointerId);
+    if (state.captured && container.hasPointerCapture(e.pointerId)) {
+      container.releasePointerCapture(e.pointerId);
+    }
     delete pointerStateRef.current[rowIndex];
   }, []);
 
