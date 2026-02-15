@@ -1,4 +1,5 @@
 import { Product, VideoFeed } from '../types';
+import { generatedBaseVideos, generatedProducts, generatedReelCommentsFa } from './generatedReels';
 
 const staticAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 
@@ -74,9 +75,10 @@ export const mockProducts: Product[] = [
     rating: 4.4,
     reviews: 1567,
   },
+  ...generatedProducts,
 ];
 
-const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [
+const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
   {
     id: 'v1',
     videoUrl: staticAsset('/videos/reels1.mp4'),
@@ -139,6 +141,30 @@ const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [
   },
 ];
 
+const generatedVideoEntries: Omit<VideoFeed, 'similarReels'>[] = generatedBaseVideos
+  .map((video) => {
+    const product = mockProducts.find((item) => item.id === video.productId);
+    if (!product) return null;
+    return {
+      id: video.id,
+      videoUrl: staticAsset(video.videoUrl),
+      thumbnail: video.thumbnail,
+      username: video.username,
+      userAvatar: video.userAvatar,
+      likes: video.likes,
+      comments: video.comments,
+      shares: video.shares,
+      description: video.description,
+      hashtags: video.hashtags,
+      musicTitle: video.musicTitle,
+      product,
+      isLive: video.isLive,
+    };
+  })
+  .filter((video): video is Omit<VideoFeed, 'similarReels'> => Boolean(video));
+
+const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [...manualBaseVideos, ...generatedVideoEntries];
+
 export const mockVideos: VideoFeed[] = baseVideos.map((video) => ({
   ...video,
   similarReels: [],
@@ -159,6 +185,18 @@ setSimilarReels('v1', ['v2', 'v3']);
 setSimilarReels('v2', ['v1', 'v4']);
 setSimilarReels('v3', ['v4', 'v1']);
 setSimilarReels('v4', ['v3', 'v2']);
+
+mockVideos.forEach((video) => {
+  if ((video.similarReels?.length ?? 0) > 0) return;
+
+  const category = video.product?.category;
+  const relatedByCategory = mockVideos.filter(
+    (candidate) => candidate.id !== video.id && candidate.product?.category === category
+  );
+  const fallbackRelated = mockVideos.filter((candidate) => candidate.id !== video.id);
+  const relatedPool = relatedByCategory.length > 0 ? relatedByCategory : fallbackRelated;
+  video.similarReels = relatedPool.slice(0, 4);
+});
 
 export const reelCommentsFa: Record<string, string[]> = {
   v1: [
@@ -196,4 +234,5 @@ export const reelCommentsFa: Record<string, string[]> = {
     'نرم‌کنندگیش در حد ماسکه یا سبک‌تره؟',
     'برای موهای فر هم جواب میده؟'
   ],
+  ...generatedReelCommentsFa,
 };
