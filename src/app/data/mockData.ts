@@ -1,5 +1,4 @@
-import { Product, VideoFeed } from '../types';
-import { generatedBaseVideos, generatedProducts, generatedReelCommentsFa } from './generatedReels';
+﻿import { Product, VideoFeed } from '../types';
 
 const staticAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 
@@ -21,9 +20,8 @@ export const mockProducts: Product[] = [
     name: 'کیت نور دوقلوی دندانپزشکی اوسینو',
     price: 185000000,
     image: 'https://tse2.mm.bing.net/th/id/OIP.awWmYRb1LkPkl1d7cB1x0QHaHa?cb=defcachec2&rs=1&pid=ImgDetMain&o=7&rm=3',
-    description: 'کیت نور دوقلوی دندان‌پزشکی اوسینو؛ ترکیبی از نور یکنواخت، طراحی حرفه‌ای و عملکرد دقیق برای محیط‌های کلینیکی.',
+    description: 'کیت نور دوقلوی دندان‌پزشکی اوسینو با نور یکنواخت و کیفیت حرفه‌ای برای کلینیک.',
     sizes: ['کوچک', 'متوسط', 'بزرگ'],
-    colors: ['مشکی', 'نقره‌ای', 'طلایی'],
     rating: 4.7,
     reviews: 892,
   },
@@ -33,49 +31,121 @@ export const mockProducts: Product[] = [
     name: 'بازی فکری Everdell',
     price: 42000000,
     image: 'https://th.bing.com/th/id/OIP.MyPy-noNXurOuxYrzGPktgHaHa?o=7&cb=defcachec2rm=3&rs=1&pid=ImgDetMain&o=7&rm=3',
-    description: 'طراحی چشم‌نواز و جمع‌وجور با اینسرت منظم؛ همه اجزای بازی دقیق و مرتب در جعبه قرار می‌گیرند.',
+    description: 'بازی فکری استراتژیک با طراحی چشم‌نواز و کیفیت ساخت بالا برای دورهمی.',
     sizes: ['تک‌سایز'],
-    colors: ['سبز جنگلی', 'قهوه‌ای چوبی', 'کرم'],
     rating: 4.3,
     reviews: 567,
   },
   {
     id: '4',
-    category: 'accessories',
+    category: 'beauty',
     name: 'کرم کاندیشنر آف نیچر',
     price: 4950000,
     image: 'https://tse4.mm.bing.net/th/id/OIP.VflHillMV-3rM6_zhLo56QHaHa?cb=defcachec2&rs=1&pid=ImgDetMain&o=7&rm=3',
-    description: 'کرم کاندیشنر آف نیچر؛ تغذیه عمیق، نرمی ماندگار و مراقبت حرفه‌ای از مو ',
+    description: 'کرم کاندیشنر آف نیچر برای تغذیه عمیق مو و حفظ نرمی روزانه.',
     sizes: ['One Size'],
-    colors: ['Brown', 'Black'],
     rating: 4.6,
     reviews: 345,
   },
   {
     id: '5',
     category: 'eyewear',
-    name: 'Sunglasses',
+    name: 'عینک آفتابی پلاریزه',
     price: 16500000,
     image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&h=500&fit=crop',
-    description: 'UV protection polarized lenses',
+    description: 'لنز پلاریزه با محافظت UV و فریم سبک برای استفاده روزمره.',
     sizes: ['One Size'],
-    colors: ['Black', 'Tortoise', 'Blue'],
     rating: 4.8,
     reviews: 678,
   },
   {
     id: '6',
     category: 'footwear',
-    name: 'Running Shoes',
+    name: 'کفش رانینگ',
     price: 38500000,
     image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&h=500&fit=crop',
-    description: 'Lightweight and breathable athletic shoes',
-    sizes: ['7', '8', '9', '10', '11', '12'],
-    colors: ['White', 'Black', 'Blue', 'Red'],
+    description: 'کفش رانینگ سبک و تنفس‌پذیر برای تمرین روزانه و پیاده‌روی طولانی.',
+    sizes: ['40', '41', '42', '43', '44'],
     rating: 4.4,
     reviews: 1567,
   },
-  ...generatedProducts,
+  {
+    id: '7',
+    category: 'electronics',
+    name: 'دوربین فیلم‌برداری ورزشی اس جی کم مدل C100',
+    price: 32900000,
+    image: 'https://dkstatics-public.digikala.com/digikala-products/8df4970be34c8a6600ac76690d6d0180b9a458a6_1706609981.jpg?x-oss-process=image/resize,m_lfit,h_800,w_800/format,webp/quality,q_90',
+    description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و فعالیت‌های ماجراجویانه.',
+    sizes: ['—'],
+    rating: 4.5,
+    reviews: 412,
+  },
+  {
+    id: '8',
+    category: 'accessories',
+    name: 'کیف دوشی مینیمال زنانه',
+    price: 21900000,
+    image: 'https://images.unsplash.com/photo-1591561954557-26941169b49e?w=800&h=800&fit=crop',
+    description: 'کیف دوشی جمع‌وجور با فضای کاربردی برای استفاده روزانه و مهمانی.',
+    sizes: ['One Size'],
+    rating: 4.4,
+    reviews: 358,
+  },
+  {
+    id: '9',
+    category: 'beauty',
+    name: 'سرم آبرسان هیالورونیک',
+    price: 9800000,
+    image: 'https://images.unsplash.com/photo-1617897903246-719242758050?w=800&h=800&fit=crop',
+    description: 'سرم آبرسان سبک برای رطوبت‌رسانی عمیق و کاهش خشکی پوست.',
+    sizes: ['30ml'],
+    rating: 4.7,
+    reviews: 521,
+  },
+  {
+    id: '10',
+    category: 'wearables',
+    name: 'ساعت هوشمند روزانه',
+    price: 44900000,
+    image: 'https://images.unsplash.com/photo-1579586337278-3f436f25d4d6?w=800&h=800&fit=crop',
+    description: 'ساعت هوشمند با پایش فعالیت، اعلان‌ها و شارژدهی مناسب.',
+    sizes: ['42mm', '46mm'],
+    rating: 4.5,
+    reviews: 287,
+  },
+  {
+    id: '11',
+    category: 'home',
+    name: 'ست ماگ سرامیکی',
+    price: 7600000,
+    image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=800&h=800&fit=crop',
+    description: 'ست ماگ سرامیکی با لعاب مقاوم و طراحی مینیمال برای استفاده روزانه.',
+    sizes: ['One Size'],
+    rating: 4.3,
+    reviews: 194,
+  },
+  {
+    id: '12',
+    category: 'lifestyle',
+    name: 'بطری هوشمند ورزشی',
+    price: 12400000,
+    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&h=800&fit=crop',
+    description: 'بطری ورزشی با طراحی ارگونومیک و متریال مقاوم برای استفاده روزانه.',
+    sizes: ['750ml'],
+    rating: 4.2,
+    reviews: 143,
+  },
+  {
+    id: '13',
+    category: 'fashion',
+    name: 'هودی اورسایز پاییزی',
+    price: 27400000,
+    image: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=800&h=800&fit=crop',
+    description: 'هودی اورسایز با پارچه نرم و گرم؛ مناسب استایل خیابانی.',
+    sizes: ['M', 'L', 'XL'],
+    rating: 4.6,
+    reviews: 333,
+  },
 ];
 
 const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
@@ -88,9 +158,9 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     likes: 4445,
     comments: 64,
     shares: 123,
-    description: 'هدبند گل‌دوزی‌شده فوق‌العاده زیبا 🌸، بهترین انتخاب برای استایل خاص و جذاب شما!',
-    hashtags: ['#هدبند', '#گل_دوزی', '#استایل_خاص', '#مد', '#زیبایی'],
-    musicTitle: 'پاییز سردم',
+    description: 'هدبند گل‌دوزی‌شده با دوخت تمیز و رنگ‌بندی خاص، انتخاب جذاب برای استایل روزانه.',
+    hashtags: ['#هدبند', '#استایل_زنانه', '#اکسسوری_شیک'],
+    musicTitle: '',
     product: mockProducts[0],
     isLive: false,
   },
@@ -103,9 +173,9 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     likes: 328700,
     comments: 578,
     shares: 891,
-    description: 'رضایت‌بخش‌ترین آنباکسینگ کیت نور دندان‌پزشکی ✨ کیفیت، دقت و نور فوق‌العاده که از همون لحظه اول حس میشه.',
-    hashtags: ['#دندانپزشکی', '#کیت_نور', '#تجهیزات_دندانپزشکی', '#آنباکسینگ', '#رضایت_بخش', '#کلینیک', '#ریلز'],
-    musicTitle: 'Just Good Music 24/7 Stay See Live Radio 🎧',
+    description: 'نمای نزدیک از کیت نور دندانپزشکی اوسینو با تمرکز روی کیفیت نور و دقت عملکرد.',
+    hashtags: ['#تجهیزات_دندانپزشکی', '#کیت_نور', '#کلینیک'],
+    musicTitle: '',
     product: mockProducts[1],
     isLive: false,
   },
@@ -118,9 +188,9 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     likes: 12500,
     comments: 234,
     shares: 456,
-    description: 'بازی فکری :contentReference[oaicite:0]{index=0}؛ دنیایی آرام و هنرمندانه از برنامه‌ریزی، استراتژی و ساخت شهر در دل طبیعت 🌳🦔',
-    hashtags: ['#بازی_فکری', '#بردگیم', '#Everdell', '#بازی_استراتژیک', '#دورهمی', '#فکری'],
-    musicTitle: 'موسیقی آرام لوفای – Chill Vibes',
+    description: 'مرور کیفیت قطعات و تجربه بازی Everdell برای دورهمی‌های خانوادگی.',
+    hashtags: ['#بازی_فکری', '#بردگیم', '#Everdell'],
+    musicTitle: '',
     product: mockProducts[2],
     isLive: false,
   },
@@ -133,37 +203,119 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     likes: 8900,
     comments: 156,
     shares: 234,
-    description: 'کرم کاندیشنر آف نیچر؛ تغذیه عمیق، نرمی ماندگار و مراقبت حرفه‌ای از مو 🌿',
-    hashtags: ['#مراقبت_مو', '#کاندیشنر', '#آف_نیچر', '#مو_سالم', '#روتین_مو'],
-    musicTitle: 'Smooth Jazz Collection',
+    description: 'کرم کاندیشنر آف نیچر با بافت سبک و نتیجه نرم‌کنندگی مناسب برای استفاده روزانه.',
+    hashtags: ['#مراقبت_مو', '#کاندیشنر', '#روتین_مو'],
+    musicTitle: '',
     product: mockProducts[3],
-    isLive: true,
+    isLive: false,
+  },
+  {
+    id: 'v5',
+    videoUrl: staticAsset('/videos/SaveGram.App_AQMNHLwMyDok4Qhw-TM58AEewKFOUhu_B1D67wAgDAdjA0xsCIg1ATikNVJEdrV2Fa4hSXUoiqofQ6INSRjixlbDI9pLRKBFRp0Vt4g.mp4'),
+    thumbnail: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=414&h=896&fit=crop',
+    username: 'styleline_ir',
+    userAvatar: staticAsset('/pics/avatars/avatar1.jpg'),
+    likes: 21340,
+    comments: 345,
+    shares: 512,
+    description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
+    hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],
+    musicTitle: '',
+    product: mockProducts[6],
+    isLive: false,
+  },
+  {
+    id: 'v6',
+    videoUrl: staticAsset('/videos/SaveGram.App_AQMtsdUPEMne5RrE9Nl4qV0RO97iOEWmMOo9hcTQHPgsa7SkZruotxzMevR68co5QaA3XjAt0dGdTOViGkjQ4ZEFrwzsSb9n-TS7bpM.mp4'),
+    thumbnail: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=414&h=896&fit=crop',
+    username: 'baghouse_shop',
+    userAvatar: staticAsset('/pics/avatars/avatar1.jpg'),
+    likes: 17620,
+    comments: 284,
+    shares: 391,
+    description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
+    hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],    musicTitle: '',
+    product: mockProducts[6],
+    isLive: false,
+  },
+  {
+    id: 'v7',
+    videoUrl: staticAsset('/videos/SaveGram.App_AQNKEQMwE4y1x0Y8ExA0COVZ_mf4rDl_gPJKyHzXBYImN_CUgHhHZ5OGNi4G9gz9Eh_RPVMx6OgjaiIRatmTRgmQ1Bmyb8aju3Mm_ew.mp4'),
+    thumbnail: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=414&h=896&fit=crop',
+    username: 'beauty_daily',
+    userAvatar: staticAsset('/pics/avatars/avatar1.jpg'),
+    likes: 29500,
+    comments: 462,
+    shares: 603,
+    description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
+    hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],
+    musicTitle: '',
+    product: mockProducts[6],
+    isLive: false,
+  },
+  {
+    id: 'v8',
+    videoUrl: staticAsset('/videos/SaveGram.App_AQNnCQGDGPRt6QBZZ-Q6vXwyWRpdWrD_GDnHX__jvtGv94sdwjzGkbBZ5Mmjzl2sS7ZQJ04nncSoL0ICd3_Nd8V0HlaWr6IvJfYmdDE.mp4'),
+    thumbnail: 'https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?w=414&h=896&fit=crop',
+    username: 'gadget_kade',
+    userAvatar: staticAsset('/pics/avatars/avatar1.jpg'),
+    likes: 35440,
+    comments: 519,
+    shares: 740,
+    description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
+    hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],
+    musicTitle: '',
+    product: mockProducts[6],
+    isLive: false,
+  },
+  {
+    id: 'v9',
+    videoUrl: staticAsset('/videos/SaveGram.App_AQOnQLjlvkpnZF35gv6BGC_lLAxLKRAQpqSggae2sX5uOewy_rWcoF8Ip4xJ98bjCwEQ2BgSHHv1EdP9Bc9agebzVlgF7goIY44BlcQ.mp4'),
+    thumbnail: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=414&h=896&fit=crop',
+    username: 'homevibe_ir',
+    userAvatar: staticAsset('/pics/avatars/avatar1.jpg'),
+    likes: 16220,
+    comments: 205,
+    shares: 298,
+    description: 'ست ماگ سرامیکی با طراحی ساده و لعاب باکیفیت برای میز صبحانه یا محل کار.',
+    hashtags: ['#خانه_و_آشپزخانه', '#ماگ', '#سبک_زندگی'],
+    musicTitle: '',
+    product: mockProducts[10],
+    isLive: false,
+  },
+  {
+    id: 'v10',
+    videoUrl: staticAsset('/videos/SaveGram.App_AQOzgDFofpQUCrb0hhK-Cscpf2195-InXtdLeCEzCCNztPV03XrLvg3-1iWdyOdyYI_DBZUA6UWXaB6wDg1u0HAaTrKhgB2JCLsPO2Y.mp4'),
+    thumbnail: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=414&h=896&fit=crop',
+    username: 'fitgear_store',
+    userAvatar: staticAsset('/pics/avatars/avatar1.jpg'),
+    likes: 14170,
+    comments: 182,
+    shares: 247,
+    description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
+    hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],
+    musicTitle: '',
+    product: mockProducts[6],   
+    isLive: false,
+  },
+  {
+    id: 'v11',
+    videoUrl: staticAsset('/videos/SaveGram.App_AQPvIPy3xH57cG-uEElCjdr8pPQQ-wIx91h2_x158mMTa2FVvA80R9rrB7_Hu4ff6PAcA4QwJW5MHrOKNascYSUv4L8ftjILKcOh-Y8.mp4'),
+    thumbnail: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=414&h=896&fit=crop',
+    username: 'streetwear_lab',
+    userAvatar: staticAsset('/pics/avatars/avatar1.jpg'),
+    likes: 26900,
+    comments: 333,
+    shares: 421,
+    description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
+    hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],
+    musicTitle: '',
+    product: mockProducts[6],
+    isLive: false,
   },
 ];
 
-const generatedVideoEntries: Omit<VideoFeed, 'similarReels'>[] = generatedBaseVideos
-  .map((video) => {
-    const product = mockProducts.find((item) => item.id === video.productId);
-    if (!product) return null;
-    return {
-      id: video.id,
-      videoUrl: staticAsset(video.videoUrl),
-      thumbnail: video.thumbnail,
-      username: video.username,
-      userAvatar: video.userAvatar,
-      likes: video.likes,
-      comments: video.comments,
-      shares: video.shares,
-      description: video.description,
-      hashtags: video.hashtags,
-      musicTitle: video.musicTitle,
-      product,
-      isLive: video.isLive,
-    };
-  })
-  .filter((video): video is Omit<VideoFeed, 'similarReels'> => Boolean(video));
-
-const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [...manualBaseVideos, ...generatedVideoEntries];
+const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [...manualBaseVideos];
 
 export const mockVideos: VideoFeed[] = baseVideos.map((video) => ({
   ...video,
@@ -199,40 +351,15 @@ mockVideos.forEach((video) => {
 });
 
 export const reelCommentsFa: Record<string, string[]> = {
-  v1: [
-    'گل‌دوزیش واقعاً ظریفه 🌸 بعد از چند بار استفاده هم فرم و نخ‌هاش سالم می‌مونه؟',
-    'ترکیب رنگاش خیلی دلنشینه، رنگ‌های خنثی‌تر مثل کرم یا بژ هم موجوده؟ 🤍',
-    'روی سر خوب فیکس میشه؟ برای موهای لَخت هم مناسبه؟',
-    'برای استفاده طولانی اذیت نمی‌کنه یا فشار میاره؟',
-    'نسبت به کار دست بودنش قیمتش منطقیه، گزینه جذابیه 💸',
-    'بیشتر به استایل روزمره میاد یا برای مهمونی هم میشه ست کرد؟ ✨'
-  ],
-
-  v2: [
-    'نورش برای کارهای دقیق واقعاً کافیه؟ توی دهان سایه نمی‌ندازه؟ 😷',
-    'شدت نورش قابل تنظیمه یا فقط یه حالته؟',
-    'برای استفاده طولانی توی کلینیک داغ نمی‌کنه؟',
-    'کیفیت ساختش نسبت به برندهای مشابه چطوره؟',
-    'برای دندانپزشکی ترمیمی هم جواب میده یا بیشتر معاینه‌ست؟',
-    'گارانتی یا خدمات پس از فروش هم داره؟'
-  ],
-
-  v3: [
-    'برای چند نفر طراحی شده؟ دونفره هم میشه بازی کرد؟ 🎲',
-    'سطح پیچیدگیش چقدره؟ برای کسی که تازه وارد بردگیمه مناسبه؟',
-    'مدت زمان هر دست بازی حدوداً چقدره؟',
-    'کیفیت قطعات و آرت‌ورکش خیلی قشنگه 😍 نسخه فارسی قوانین داره؟',
-    'برای دورهمی‌های آروم خیلی می‌چسبه، تکراری نمیشه؟',
-    'اگه یه نفر استراتژی دوست داشته باشه، انتخاب خوبیه؟'
-  ],
-
-  v4: [
-    'برای موهای خشک و رنگ‌شده هم مناسبه؟ 🌿',
-    'بعد از استفاده مو رو سنگین یا چرب نمی‌کنه؟',
-    'رایحه‌ش ملایمه یا موندگاره؟',
-    'برای استفاده روزانه خوبه یا بهتره هفته‌ای چند بار استفاده بشه؟',
-    'نرم‌کنندگیش در حد ماسکه یا سبک‌تره؟',
-    'برای موهای فر هم جواب میده؟'
-  ],
-  ...generatedReelCommentsFa,
+  v1: ['رنگ‌بندی هدبند عالیه، مدل ساده‌تر هم دارید؟'],
+  v2: ['نور این کیت برای کار دقیق خیلی کاربردیه، گارانتی هم داره؟'],
+  v3: ['برای جمع ۳ نفره هم جذابه، نسخه فارسی قوانین موجوده؟'],
+  v4: ['برای موهای رنگ‌شده هم مناسبه؟ بعد از حمام سنگین نمی‌کنه؟'],
+  v5: ['تنخور مانتو خیلی خوبه، سایز XL هم موجود دارید؟'],
+  v6: ['این کیف داخلش جای تبلت کوچک هم داره؟'],
+  v7: ['جذب سرم خوبه، برای پوست حساس هم اوکیه؟'],
+  v8: ['عمر باتری ساعت در استفاده روزمره چقدره؟'],
+  v9: ['لعاب ماگ بعد از شست‌وشو کدر نمی‌شه؟'],
+  v10: ['بطری نشتی نداره؟ برای باشگاه عالی به نظر میاد 💪'],
+  v11: ['هودی خیلی خوش‌فرمه، رنگ طوسی روشن هم دارید؟'],
 };
