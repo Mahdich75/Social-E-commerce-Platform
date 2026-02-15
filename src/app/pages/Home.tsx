@@ -88,6 +88,17 @@ export default function Home() {
 
   const activeVideo = getReelAt(activeIndex) ?? baseReels[0];
 
+  const isNearViewport = useCallback(
+    (verticalIndex: number, horizontalIndex: number) => {
+      const activeHorizontal = horizontalPositions[activeIndex] ?? 0;
+      const verticalDistance = Math.abs(verticalIndex - activeIndex);
+      if (verticalDistance > 1) return false;
+      if (verticalIndex !== activeIndex) return horizontalIndex === 0;
+      return Math.abs(horizontalIndex - activeHorizontal) <= 1;
+    },
+    [activeIndex, horizontalPositions]
+  );
+
   const preloadNearby = useCallback((reels: VideoFeed[]) => {
     reels.forEach((reel) => {
       const preloader = document.createElement('video');
@@ -223,7 +234,7 @@ export default function Home() {
         <div
           ref={scrollRef}
           onScroll={handleVerticalScroll}
-          className="absolute inset-0 overflow-y-auto snap-y snap-mandatory"
+          className="absolute inset-0 overflow-y-auto snap-y snap-mandatory overscroll-y-contain"
           style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
         >
           {baseReels.map((_, verticalIndex) => {
@@ -237,8 +248,8 @@ export default function Home() {
                     horizontalRefs.current[verticalIndex] = el;
                   }}
                   onScroll={(e) => handleHorizontalScroll(verticalIndex, e)}
-                  className="absolute inset-0 overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex"
-                  style={{ touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}
+                  className="absolute inset-0 overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex overscroll-x-contain"
+                  style={{ touchAction: 'auto', WebkitOverflowScrolling: 'touch' }}
                 >
                   {pool.map((video, horizontalIndex) => {
                     const currentProduct = video.product;
@@ -261,7 +272,7 @@ export default function Home() {
                           muted={isMuted}
                           loop
                           playsInline
-                          preload="metadata"
+                          preload={isNearViewport(verticalIndex, horizontalIndex) ? 'metadata' : 'none'}
                           onLoadedMetadata={(e) => {
                             e.currentTarget.volume = globalVolume;
                           }}
