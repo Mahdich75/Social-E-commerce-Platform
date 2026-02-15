@@ -36,19 +36,6 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const horizontalRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
-  const pointerStateRef = useRef<
-    Record<
-      number,
-      {
-        startX: number;
-        startY: number;
-        startScrollLeft: number;
-        lockedAxis: 'x' | 'y' | null;
-        pointerId: number;
-        captured: boolean;
-      }
-    >
-  >({});
 
   const { addToBasket } = useBasketStore();
   const { toggleLike, isLiked } = useReelStore();
@@ -232,69 +219,6 @@ export default function Home() {
     });
   }, []);
 
-  const handleRowPointerDown = useCallback((rowIndex: number, e: React.PointerEvent<HTMLDivElement>) => {
-    const container = horizontalRefs.current[rowIndex];
-    if (!container) return;
-    pointerStateRef.current[rowIndex] = {
-      startX: e.clientX,
-      startY: e.clientY,
-      startScrollLeft: container.scrollLeft,
-      lockedAxis: null,
-      pointerId: e.pointerId,
-      captured: false,
-    };
-  }, []);
-
-  const handleRowPointerMove = useCallback((rowIndex: number, e: React.PointerEvent<HTMLDivElement>) => {
-    const state = pointerStateRef.current[rowIndex];
-    const container = horizontalRefs.current[rowIndex];
-    if (!state || !container || state.pointerId !== e.pointerId) return;
-
-    const dx = e.clientX - state.startX;
-    const dy = e.clientY - state.startY;
-    const lockThreshold = 6;
-
-    if (!state.lockedAxis && (Math.abs(dx) > lockThreshold || Math.abs(dy) > lockThreshold)) {
-      state.lockedAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
-      pointerStateRef.current[rowIndex] = state;
-    }
-
-    if (state.lockedAxis !== 'x') {
-      if (state.lockedAxis === 'y') {
-        delete pointerStateRef.current[rowIndex];
-      }
-      return;
-    }
-
-    if (!state.captured) {
-      container.setPointerCapture(e.pointerId);
-      state.captured = true;
-      pointerStateRef.current[rowIndex] = state;
-    }
-
-    e.preventDefault();
-    container.scrollLeft = state.startScrollLeft - dx;
-  }, []);
-
-  const handleRowPointerEnd = useCallback((rowIndex: number, e: React.PointerEvent<HTMLDivElement>) => {
-    const state = pointerStateRef.current[rowIndex];
-    const container = horizontalRefs.current[rowIndex];
-    if (!state || !container || state.pointerId !== e.pointerId) return;
-
-    if (state.lockedAxis === 'x' && container.clientWidth > 0) {
-      const snapIndex = Math.round(container.scrollLeft / container.clientWidth);
-      container.scrollTo({
-        left: snapIndex * container.clientWidth,
-        behavior: 'smooth',
-      });
-    }
-
-    if (state.captured && container.hasPointerCapture(e.pointerId)) {
-      container.releasePointerCapture(e.pointerId);
-    }
-    delete pointerStateRef.current[rowIndex];
-  }, []);
-
   useEffect(() => {
     const row = productRows[activeIndex];
     if (!row) return;
@@ -436,12 +360,8 @@ export default function Home() {
                     horizontalRefs.current[rowIndex] = el;
                   }}
                   onScroll={(e) => handleHorizontalScroll(rowIndex, e)}
-                  onPointerDown={(e) => handleRowPointerDown(rowIndex, e)}
-                  onPointerMove={(e) => handleRowPointerMove(rowIndex, e)}
-                  onPointerUp={(e) => handleRowPointerEnd(rowIndex, e)}
-                  onPointerCancel={(e) => handleRowPointerEnd(rowIndex, e)}
                   className="absolute inset-0 overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex overscroll-x-contain scroll-smooth"
-                  style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
+                  style={{ touchAction: 'auto', WebkitOverflowScrolling: 'touch' }}
                 >
                   {row.reels.map((video, reelIndex) => {
                     const currentProduct = row.product ?? video.product;
@@ -453,7 +373,11 @@ export default function Home() {
                     const isCaptionExpanded = expandedCaptionKey === captionKey;
 
                     return (
-                      <article key={`${video.id}-${reelIndex}`} className="relative h-full w-full shrink-0 snap-start overflow-hidden">
+                      <article
+                        key={`${video.id}-${reelIndex}`}
+                        className="relative h-full w-full shrink-0 snap-start overflow-hidden"
+                        style={{ contentVisibility: 'auto', containIntrinsicSize: '100vh' }}
+                      >
                         <video
                           ref={(el) => {
                             videoRefs.current[`${rowIndex}-${reelIndex}`] = el;
