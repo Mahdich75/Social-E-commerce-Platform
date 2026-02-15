@@ -16,6 +16,7 @@ export default function Profile() {
   const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(introReel?.videoUrl ?? null);
   const [introVideoName, setIntroVideoName] = useState(introReel?.product?.name ?? 'intro_video.mp4');
   const introFileInputRef = useRef<HTMLInputElement>(null);
+  const introVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     return () => {
@@ -23,6 +24,15 @@ export default function Profile() {
         URL.revokeObjectURL(introVideoUrl);
       }
     };
+  }, [introVideoUrl]);
+
+  useEffect(() => {
+    const video = introVideoRef.current;
+    if (!video) return;
+
+    video.muted = false;
+    video.volume = 1;
+    video.play().catch(() => undefined);
   }, [introVideoUrl]);
 
   const handleWishlistItemClick = (product: Product) => {
@@ -111,12 +121,15 @@ export default function Profile() {
               <div className="w-full rounded-3xl overflow-hidden border border-white/20 bg-black shadow-[0_18px_40px_rgba(0,0,0,0.22)] animate-in fade-in duration-500">
                 <div className="relative w-full aspect-video bg-black">
                   <video
+                    ref={introVideoRef}
                     src={introVideoUrl}
                     className="absolute inset-0 w-full h-full object-cover object-[50%_35%]"
+                    controls
                     autoPlay
-                    muted
+                    muted={false}
                     playsInline
                     loop
+                    preload="metadata"
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/10 to-black/65" />
                   <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/75 to-transparent" />

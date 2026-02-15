@@ -23,6 +23,7 @@ interface CommentsDrawerProps {
   onOpenChange: (open: boolean) => void;
   videoId: string;
   commentsCount: number;
+  commentsOverride?: string[];
 }
 
 const mockUsers = [
@@ -60,7 +61,7 @@ const mockUsers = [
   },
 ];
 
-export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount }: CommentsDrawerProps) {
+export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount, commentsOverride }: CommentsDrawerProps) {
   const [newComment, setNewComment] = useState('');
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
 
@@ -72,7 +73,7 @@ export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount }: C
     'من اینو برای ست اتاقم می‌خوام، عاشق جزئیاتشم 🫶',
   ];
 
-  const commentsForVideo = reelCommentsFa[videoId] ?? fallbackComments;
+  const commentsForVideo = commentsOverride ?? reelCommentsFa[videoId] ?? fallbackComments;
   const generatedComments: Comment[] = commentsForVideo.map((text, index) => {
     const user = mockUsers[index % mockUsers.length];
     return {
