@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Bell, Bookmark, Heart, MessageCircle, MessageSquare, Music, Share2, ShoppingBag } from 'lucide-react';
+import { Bell, Bookmark, Heart, MessageCircle, MessageSquare, Share2, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router';
 import { mockVideos } from '../data/mockData';
 import { ProductDrawer } from '../components/ProductDrawer';
@@ -322,13 +322,6 @@ export default function Home() {
                           </button>
                         </div>
                       )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 mb-3">
-                    <Music className="w-3 h-3 text-white" />
-                    <div className="flex-1 overflow-hidden">
-                      <p className="text-white text-sm animate-marquee whitespace-nowrap">{video.musicTitle}</p>
                     </div>
                   </div>
 
