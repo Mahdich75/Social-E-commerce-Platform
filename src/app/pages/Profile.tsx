@@ -108,23 +108,36 @@ export default function Profile() {
             </div>
 
             {introVideoUrl ? (
-              <div className="w-full rounded-2xl overflow-hidden border border-zinc-200 bg-black shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
-                <div className="w-full aspect-video bg-black">
+              <div className="w-full rounded-3xl overflow-hidden border border-white/20 bg-black shadow-[0_18px_40px_rgba(0,0,0,0.22)] animate-in fade-in duration-500">
+                <div className="relative w-full aspect-video bg-black">
                   <video
                     src={introVideoUrl}
-                    className="w-full h-full object-cover object-[50%_35%]"
-                    controls
+                    className="absolute inset-0 w-full h-full object-cover object-[50%_35%]"
                     autoPlay
                     muted
                     playsInline
                     loop
                   />
-                </div>
-                <div className="px-3 py-2 bg-zinc-950 text-zinc-200 text-xs">
-                  <p className="font-semibold truncate">{introVideoName}</p>
-                  {introReel && (
-                    <p className="text-zinc-400 mt-1 line-clamp-2">@{introReel.username} • {introReel.description}</p>
-                  )}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/10 to-black/65" />
+                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/75 to-transparent" />
+
+                  <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/35 text-white/90 text-xs backdrop-blur-sm border border-white/20">
+                    Introduction
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
+                    <div className="flex items-end justify-center sm:justify-start gap-3">
+                      <img
+                        src={`${import.meta.env.BASE_URL}pics/profile/avatar.jpg`}
+                        alt={profileUsername}
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-white/80 shadow-[0_0_0_6px_rgba(255,255,255,0.12)] object-cover"
+                      />
+                      <div className="px-3 py-2 rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 max-w-[85%]">
+                        <p className="text-white text-lg sm:text-2xl font-semibold leading-tight">@{profileUsername}</p>
+                        <p className="text-white/80 text-xs sm:text-sm line-clamp-1">{introVideoName}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -137,19 +150,6 @@ export default function Profile() {
                 <p className="text-xs text-zinc-500 mt-1">Show visitors who you are in one short clip</p>
               </button>
             )}
-          </div>
-
-          {/* User Info */}
-          <div className="flex items-center gap-4 mb-6">
-            <img
-              src={`${import.meta.env.BASE_URL}pics/profile/avatar.jpg`}
-              alt="Profile"
-              className="w-20 h-20 rounded-full"
-            />
-            <div className="flex-1">
-              <h2 className="text-xl font-bold">@{profileUsername}</h2>
-              <p className="text-sm text-zinc-600">Content Creator</p>
-            </div>
           </div>
 
           {/* Stats */}
