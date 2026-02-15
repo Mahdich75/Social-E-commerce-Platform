@@ -36,8 +36,8 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const horizontalRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
-  const touchStateRef = useRef<
-    Record<number, { startX: number; startY: number; startScrollLeft: number; lockedAxis: 'x' | 'y' | null }>
+  const pointerStateRef = useRef<
+    Record<number, { startX: number; startY: number; startScrollLeft: number; lockedAxis: 'x' | 'y' | null; pointerId: number }>
   >({});
 
   const { addToBasket } = useBasketStore();
@@ -222,31 +222,31 @@ export default function Home() {
     });
   }, []);
 
-  const handleRowTouchStart = useCallback((rowIndex: number, e: React.TouchEvent<HTMLDivElement>) => {
+  const handleRowPointerDown = useCallback((rowIndex: number, e: React.PointerEvent<HTMLDivElement>) => {
     const container = horizontalRefs.current[rowIndex];
     if (!container) return;
-    const touch = e.touches[0];
-    touchStateRef.current[rowIndex] = {
-      startX: touch.clientX,
-      startY: touch.clientY,
+    container.setPointerCapture(e.pointerId);
+    pointerStateRef.current[rowIndex] = {
+      startX: e.clientX,
+      startY: e.clientY,
       startScrollLeft: container.scrollLeft,
       lockedAxis: null,
+      pointerId: e.pointerId,
     };
   }, []);
 
-  const handleRowTouchMove = useCallback((rowIndex: number, e: React.TouchEvent<HTMLDivElement>) => {
-    const state = touchStateRef.current[rowIndex];
+  const handleRowPointerMove = useCallback((rowIndex: number, e: React.PointerEvent<HTMLDivElement>) => {
+    const state = pointerStateRef.current[rowIndex];
     const container = horizontalRefs.current[rowIndex];
-    if (!state || !container) return;
+    if (!state || !container || state.pointerId !== e.pointerId) return;
 
-    const touch = e.touches[0];
-    const dx = touch.clientX - state.startX;
-    const dy = touch.clientY - state.startY;
+    const dx = e.clientX - state.startX;
+    const dy = e.clientY - state.startY;
     const threshold = 12;
 
     if (!state.lockedAxis && (Math.abs(dx) > threshold || Math.abs(dy) > threshold)) {
       state.lockedAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
-      touchStateRef.current[rowIndex] = state;
+      pointerStateRef.current[rowIndex] = state;
     }
 
     if (state.lockedAxis !== 'x') return;
@@ -255,10 +255,10 @@ export default function Home() {
     container.scrollLeft = state.startScrollLeft - dx;
   }, []);
 
-  const handleRowTouchEnd = useCallback((rowIndex: number) => {
-    const state = touchStateRef.current[rowIndex];
+  const handleRowPointerEnd = useCallback((rowIndex: number, e: React.PointerEvent<HTMLDivElement>) => {
+    const state = pointerStateRef.current[rowIndex];
     const container = horizontalRefs.current[rowIndex];
-    if (!state || !container) return;
+    if (!state || !container || state.pointerId !== e.pointerId) return;
 
     if (state.lockedAxis === 'x' && container.clientWidth > 0) {
       const snapIndex = Math.round(container.scrollLeft / container.clientWidth);
@@ -268,7 +268,8 @@ export default function Home() {
       });
     }
 
-    delete touchStateRef.current[rowIndex];
+    container.releasePointerCapture(e.pointerId);
+    delete pointerStateRef.current[rowIndex];
   }, []);
 
   useEffect(() => {
@@ -412,11 +413,11 @@ export default function Home() {
                     horizontalRefs.current[rowIndex] = el;
                   }}
                   onScroll={(e) => handleHorizontalScroll(rowIndex, e)}
-                  onTouchStart={(e) => handleRowTouchStart(rowIndex, e)}
-                  onTouchMove={(e) => handleRowTouchMove(rowIndex, e)}
-                  onTouchEnd={() => handleRowTouchEnd(rowIndex)}
-                  onTouchCancel={() => handleRowTouchEnd(rowIndex)}
-                  className="absolute inset-0 overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex overscroll-x-contain"
+                  onPointerDown={(e) => handleRowPointerDown(rowIndex, e)}
+                  onPointerMove={(e) => handleRowPointerMove(rowIndex, e)}
+                  onPointerUp={(e) => handleRowPointerEnd(rowIndex, e)}
+                  onPointerCancel={(e) => handleRowPointerEnd(rowIndex, e)}
+                  className="absolute inset-0 overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex overscroll-x-contain scroll-smooth"
                   style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
                 >
                   {row.reels.map((video, reelIndex) => {
