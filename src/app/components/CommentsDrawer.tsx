@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { X, Heart, Send } from 'lucide-react';
 import { reelCommentsFa } from '../data/mockData';
 import {
@@ -32,7 +32,7 @@ const mockUsers = [
   },
   {
     username: 'ali_reviews',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43d?w=100&h=100&fit=crop',
   },
   {
     username: 'sahar_shop',
@@ -65,11 +65,11 @@ export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount }: C
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
 
   const fallbackComments = [
-    'این محصول خیلی جذابه، کسی تجربه خریدش رو داشته؟',
-    'کیفیتش به قیمتش می‌ارزه؟',
-    'رنگ‌بندی دیگه هم داره؟',
-    'من برای هدیه می‌خوام، پیشنهاد می‌کنید؟ 🎁',
-    'ظاهرش خیلی خوبه، احتمال زیاد می‌خرمش 😍',
+    'خیلی قشنگه 😍',
+    'کارِ دست؟ فوق‌العاده‌ست 👏',
+    'رنگ‌بندی‌ها دلبره 💙✨',
+    'قیمتش برای هدیه خیلی خوبه، موجودی رنگ کرم هم دارید؟',
+    'من اینو برای ست اتاقم می‌خوام، عاشق جزئیاتشم 🫶',
   ];
 
   const commentsForVideo = reelCommentsFa[videoId] ?? fallbackComments;
@@ -81,7 +81,7 @@ export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount }: C
       userAvatar: user.avatar,
       text,
       likes: 18 + (index + 1) * 7,
-      timestamp: `${index + 1}h ago`,
+      timestamp: `${index + 1} ساعت پیش`,
     };
   });
 
@@ -111,7 +111,7 @@ export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount }: C
         <DrawerHeader className="border-b border-zinc-200 px-4 py-4">
           <div className="flex items-center justify-between">
             <DrawerTitle className="text-lg font-bold">
-              {Math.max(commentsCount, generatedComments.length)} Comments
+              {Math.max(commentsCount, generatedComments.length)} نظر
             </DrawerTitle>
             <DrawerClose asChild>
               <button
@@ -124,7 +124,7 @@ export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount }: C
           </div>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4" dir="rtl">
           <div className="space-y-6">
             {generatedComments.map((comment) => (
               <div key={comment.id} className="flex gap-3">
@@ -136,16 +136,16 @@ export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount }: C
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      <p className="font-semibold text-sm">{comment.username}</p>
-                      <p className="text-sm text-zinc-700 mt-1 break-words">{comment.text}</p>
-                      <div className="flex items-center gap-4 mt-2">
+                      <p className="font-semibold text-sm text-right">{comment.username}</p>
+                      <p className="text-sm text-zinc-700 mt-1 break-words text-right">{comment.text}</p>
+                      <div className="flex items-center gap-4 mt-2 justify-end">
                         <span className="text-xs text-zinc-500">{comment.timestamp}</span>
                         <button className="text-xs text-zinc-500 font-semibold hover:text-zinc-700 transition-colors">
-                          Reply
+                          پاسخ
                         </button>
                         {likedComments.has(comment.id) && (
                           <span className="text-xs text-zinc-700 font-semibold">
-                            {comment.likes + 1} likes
+                            {comment.likes + 1} لایک
                           </span>
                         )}
                       </div>
@@ -179,14 +179,14 @@ export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount }: C
               alt="Your avatar"
               className="w-10 h-10 rounded-full flex-shrink-0"
             />
-            <div className="flex-1 flex items-center gap-2 bg-zinc-100 rounded-full px-4 py-2.5">
+            <div className="flex-1 flex items-center gap-2 bg-zinc-100 rounded-full px-4 py-2.5" dir="rtl">
               <input
                 type="text"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
-                placeholder="Add a comment..."
-                className="flex-1 bg-transparent outline-none text-sm placeholder:text-zinc-500"
+                placeholder="نظر خودتو بنویس..."
+                className="flex-1 bg-transparent outline-none text-sm placeholder:text-zinc-500 text-right"
               />
               <button
                 onClick={handleSendComment}
@@ -205,4 +205,3 @@ export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount }: C
     </Drawer>
   );
 }
-

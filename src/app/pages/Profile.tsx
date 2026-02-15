@@ -4,10 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { useWishlistStore } from '../store/useWishlistStore';
 import { ProductDrawer } from '../components/ProductDrawer';
 import { Product } from '../types';
-import { mockVideos } from '../data/mockData';
+import { mockProducts, mockVideos } from '../data/mockData';
 import { formatPriceToman } from '../utils/price';
 
 export default function Profile() {
+  const profileUsername = 'shirinbuttons';
   const { items: wishlistItems } = useWishlistStore();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductDrawerOpen, setIsProductDrawerOpen] = useState(false);
@@ -54,6 +55,13 @@ export default function Profile() {
     setIntroVideoUrl(null);
     setIntroVideoName('');
   };
+
+  const fantasyButtonProducts = mockProducts.filter(
+    (product) =>
+      product.id.startsWith('btn-') ||
+      product.category === 'fantasy-buttons' ||
+      product.category === 'fantasy_buttons'
+  );
 
   return (
     <>
@@ -134,12 +142,12 @@ export default function Profile() {
           {/* User Info */}
           <div className="flex items-center gap-4 mb-6">
             <img
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop"
+              src={`${import.meta.env.BASE_URL}pics/profile/avatar.jpg`}
               alt="Profile"
               className="w-20 h-20 rounded-full"
             />
             <div className="flex-1">
-              <h2 className="text-xl font-bold">@username</h2>
+              <h2 className="text-xl font-bold">@{profileUsername}</h2>
               <p className="text-sm text-zinc-600">Content Creator</p>
             </div>
           </div>
@@ -154,11 +162,6 @@ export default function Profile() {
             <div className="text-center">
               <p className="text-2xl font-bold">382</p>
               <p className="text-xs text-zinc-600">Following</p>
-            </div>
-            <div className="w-px h-10 bg-zinc-200" />
-            <div className="text-center">
-              <p className="text-2xl font-bold">156</p>
-              <p className="text-xs text-zinc-600">Likes</p>
             </div>
           </div>
         </div>
@@ -189,10 +192,6 @@ export default function Profile() {
                     alt="Video"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute bottom-2 left-2 text-white text-xs font-semibold flex items-center gap-1">
-                    <Heart className="w-3 h-3" />
-                    {video.likes > 1000 ? `${(video.likes / 1000).toFixed(1)}K` : video.likes}
-                  </div>
                 </div>
               ))}
             </div>
@@ -200,24 +199,24 @@ export default function Profile() {
 
           <TabsContent value="products" className="mt-0 p-4">
             <div className="grid grid-cols-2 gap-4">
-              {mockVideos.filter(v => v.product).map((video) => (
+              {fantasyButtonProducts.map((product) => (
                 <button
-                  key={video.id}
-                  onClick={() => video.product && handleWishlistItemClick(video.product)}
+                  key={product.id}
+                  onClick={() => handleWishlistItemClick(product)}
                   className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden border border-white/35 shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:bg-white/40 transition-colors text-left"
                 >
                   <div className="aspect-square bg-zinc-100 relative overflow-hidden">
                     <img
-                      src={video.product!.image}
-                      alt={video.product!.name}
+                      src={product.image}
+                      alt={product.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="p-3">
                     <h3 className="font-semibold text-sm line-clamp-2 mb-1">
-                      {video.product!.name}
+                      {product.name}
                     </h3>
-                    <p className="text-base font-bold">{formatPriceToman(video.product!.price)}</p>
+                    <p className="text-base font-bold">{formatPriceToman(product.price)}</p>
                   </div>
                 </button>
               ))}
@@ -225,7 +224,7 @@ export default function Profile() {
           </TabsContent>
 
           <TabsContent value="reviews" className="mt-0 p-4">
-            <div className="space-y-4">
+            <div className="space-y-4" dir="rtl">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="bg-white border border-zinc-200 rounded-xl p-4">
                   <div className="flex items-center gap-3 mb-3">
@@ -235,7 +234,7 @@ export default function Profile() {
                       className="w-10 h-10 rounded-full"
                     />
                     <div className="flex-1">
-                      <p className="font-semibold text-sm">Product Name</p>
+                      <p className="font-semibold text-sm text-right">دکمه فانتزی دست‌ساز</p>
                       <div className="flex items-center gap-1 mt-1">
                         {[...Array(5)].map((_, i) => (
                           <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
@@ -243,8 +242,8 @@ export default function Profile() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm text-zinc-600">
-                    Great product! Highly recommended for anyone looking for quality.
+                  <p className="text-sm text-zinc-600 text-right">
+                    خیلی قشنگه 😍 کارِ دست؟ فوق‌العاده‌ست 👏 رنگ‌بندی‌ها دلبره 💙✨
                   </p>
                 </div>
               ))}
