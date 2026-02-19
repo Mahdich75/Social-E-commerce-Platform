@@ -2,7 +2,46 @@
 
 const staticAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 
-export const mockProducts: Product[] = [
+export const mockCreators = [
+  { id: 'creator_shirinbuttons', username: 'shirinbuttons', avatar: staticAsset('/pics/profile/avatar.jpg') },
+  { id: 'creator_tech_hub', username: 'tech_hub', avatar: staticAsset('/pics/avatars/avatar1.jpg') },
+  { id: 'creator_puzzle_gallery', username: 'puzzle_gallery', avatar: staticAsset('/pics/avatars/avatar1.jpg') },
+  { id: 'creator_massage_corner', username: 'massage_corner', avatar: staticAsset('/pics/avatars/avatar2.jpg') },
+  { id: 'creator_beauty_daily', username: 'beauty_daily', avatar: staticAsset('/pics/avatars/avatar3.jpg') },
+  { id: 'creator_style_guru', username: 'style_guru', avatar: staticAsset('/pics/avatars/avatar3.jpg') },
+] as const;
+
+const creatorById = Object.fromEntries(mockCreators.map((creator) => [creator.id, creator])) as Record<
+  string,
+  (typeof mockCreators)[number]
+>;
+
+const creatorByCategory: Record<string, string> = {
+  'electronics/health': 'creator_massage_corner',
+  electronics: 'creator_tech_hub',
+  'toy/puzzle': 'creator_puzzle_gallery',
+  puzzle: 'creator_puzzle_gallery',
+  art: 'creator_shirinbuttons',
+  'fantasy-buttons': 'creator_shirinbuttons',
+  fantasy_buttons: 'creator_shirinbuttons',
+  beauty: 'creator_beauty_daily',
+  fashion: 'creator_style_guru',
+  accessories: 'creator_style_guru',
+  accessory: 'creator_style_guru',
+  wearables: 'creator_tech_hub',
+  lifestyle: 'creator_style_guru',
+  eyewear: 'creator_style_guru',
+  home: 'creator_style_guru',
+};
+
+const creatorByProductId: Record<string, string> = {
+  '15': 'creator_shirinbuttons',
+  '16': 'creator_puzzle_gallery',
+  '17': 'creator_massage_corner',
+  '18': 'creator_tech_hub',
+};
+
+const baseMockProducts: Omit<Product, 'creatorId' | 'creatorUsername' | 'creatorAvatar'>[] = [
   {
     id: '1',
     category: 'accessory',
@@ -269,6 +308,17 @@ export const mockProducts: Product[] = [
   },
 ];
 
+export const mockProducts: Product[] = baseMockProducts.map((product) => {
+  const creatorId = creatorByProductId[product.id] ?? creatorByCategory[product.category] ?? 'creator_style_guru';
+  const creator = creatorById[creatorId] ?? creatorById.creator_style_guru;
+  return {
+    ...product,
+    creatorId: creator.id,
+    creatorUsername: creator.username,
+    creatorAvatar: creator.avatar,
+  };
+});
+
 const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
   {
     id: 'v1',
@@ -342,6 +392,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
     hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],
     musicTitle: '',
+    processType: 'intro',
     product: mockProducts[6],
     isLive: false,
   },
@@ -372,6 +423,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
     hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],
     musicTitle: '',
+    processType: 'usage',
     product: mockProducts[6],
     isLive: false,
   },
@@ -387,6 +439,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
     hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],
     musicTitle: '',
+    processType: 'detail',
     product: mockProducts[6],
     isLive: false,
   },
@@ -417,6 +470,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
     hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],
     musicTitle: '',
+    processType: 'before_after',
     product: mockProducts[6],   
     isLive: false,
   },
@@ -432,6 +486,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'دوربین ورزشی جمع‌وجور و مقاوم با کیفیت تصویر بالا؛ مناسب ثبت لحظات هیجانی در ورزش، سفر و ماجراجویی.',
     hashtags: ['#دوربین_ورزشی', '#فیلمبرداری', '#ماجراجویی'],
     musicTitle: '',
+    processType: 'result',
     product: mockProducts[6],
     isLive: false,
   },
@@ -447,6 +502,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'فقط کف دستتو باز کن، بقیه‌ش با خودشه 🚀📸💬 برای دریافت قیمت کلمه «پرنده» رو کامنت کن 👇🏽',
     hashtags: ['#دوربین_پرنده', '#تولید_محتوا', '#ولاگ', '#دوربین_ورزشی'],
     musicTitle: '',
+    processType: 'usage',
     product: mockProducts[16],
     isLive: false,
   },
@@ -462,6 +518,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'این پازل سه‌بعدی رو ببین! مرحله‌به‌مرحله می‌سازی و آخرش یه دکور فوق‌العاده داری 🧩✨',
     hashtags: ['#پازل', '#پازل_سه_بعدی', '#سرگرمی_فکری', '#ماکت', '#دکوری'],
     musicTitle: '',
+    processType: 'intro',
     product: mockProducts[14],
     isLive: false,
   },
@@ -477,6 +534,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'جزئیات این پازل سه‌بعدی واقعا خیره‌کننده‌ست 😍 برای استعلام قیمت کلمه «هری» رو کامنت کن.',
     hashtags: ['#پازل', '#پازل_سه_بعدی', '#هری_پاتر', '#مینیاتوری', '#خلاقیت'],
     musicTitle: '',
+    processType: 'build',
     product: mockProducts[14],
     isLive: false,
   },
@@ -492,6 +550,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'استوری کامل این پازل سه‌بعدی رو گذاشتیم؛ از بازکردن جعبه تا نتیجه نهایی رو ببینید 👀🧩',
     hashtags: ['#پازل', '#پازل_سه_بعدی', '#استوری', '#کاردستی', '#سرگرمی'],
     musicTitle: '',
+    processType: 'result',
     product: mockProducts[14],
     isLive: false,
   },
@@ -507,6 +566,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'ماساژور رباتیک حرارتی برای ریلکس شدن بعد از یک روز پرکار؛ هم گرما داره هم ماساژ عمیق 💆‍♀️🔥',
     hashtags: ['#ماساژور', '#ماساژور_رباتیک', '#رفع_خستگی', '#سلامتی', '#ریلکس'],
     musicTitle: '',
+    processType: 'intro',
     product: mockProducts[15],
     isLive: false,
   },
@@ -522,6 +582,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'اگه شانه و گردنت همیشه گرفته‌ست، این ماساژور رباتیک واقعا نجات‌دهنده‌ست 👌',
     hashtags: ['#ماساژور_گردن', '#ماساژور_شانه', '#ارامش', '#درد_عضلات', '#ماساژ'],
     musicTitle: '',
+    processType: 'usage',
     product: mockProducts[15],
     isLive: false,
   },
@@ -537,6 +598,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'این ماساژور رباتیک برای کساییه که زیاد پشت سیستم میشینن و گردن‌درد دارن 😩💆',
     hashtags: ['#گردن_درد', '#پشت_میزنشینی', '#ماساژور', '#سلامت_بدن', '#آرامش_عضلانی'],
     musicTitle: '',
+    processType: 'benefit',
     product: mockProducts[15],
     isLive: false,
   },
@@ -552,6 +614,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'ترندترین ماساژور رباتیک با ماساژ عمیق برای گردن، کتف و ساق پا؛ تجربه آرامش واقعی ✨',
     hashtags: ['#ماساژور_ترند', '#ماساژ_عمیق', '#رفع_گرفتگی', '#لایف_استایل', '#ماساژور_رباتیک'],
     musicTitle: '',
+    processType: 'result',
     product: mockProducts[15],
     isLive: false,
   },
@@ -567,6 +630,7 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     description: 'مقایسه کامل ماساژور شانه و گردن خرچنگی با شیاتسو؛ ویدیو رو دقیق ببین تا بهترین انتخاب رو داشته باشی 💆‍♂️',
     hashtags: ['#ماساژور_رباتیک', '#ماساژور_گردن', '#مقایسه_محصول', '#شیاتسو', '#سلامت_عضلات'],
     musicTitle: '',
+    processType: 'comparison',
     product: mockProducts[15],
     isLive: false,
   },
@@ -622,13 +686,21 @@ setSimilarReels('v20', ['v5', 'v7', 'v8', 'v10']);
 mockVideos.forEach((video) => {
   if ((video.similarReels?.length ?? 0) > 0) return;
 
-  const category = video.product?.category;
-  const relatedByCategory = mockVideos.filter(
-    (candidate) => candidate.id !== video.id && candidate.product?.category === category
-  );
-  const fallbackRelated = mockVideos.filter((candidate) => candidate.id !== video.id);
-  const relatedPool = relatedByCategory.length > 0 ? relatedByCategory : fallbackRelated;
-  video.similarReels = relatedPool.slice(0, 4);
+  const relatedPool = mockVideos
+    .filter((candidate) => candidate.id !== video.id)
+    .map((candidate) => {
+      let score = 0;
+      if (video.product?.id && candidate.product?.id && video.product.id === candidate.product.id) score += 100;
+      if (video.processType && candidate.processType && video.processType === candidate.processType) score += 40;
+      if (video.product?.category && candidate.product?.category && video.product.category === candidate.product.category) {
+        score += 16;
+      }
+      return { candidate, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .map((item) => item.candidate);
+
+  video.similarReels = relatedPool.slice(0, 6);
 });
 
 export const reelCommentsFa: Record<string, string[]> = {

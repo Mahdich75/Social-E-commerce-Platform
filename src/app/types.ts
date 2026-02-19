@@ -6,6 +6,9 @@ export interface Product {
   image: string;
   description: string;
   sizes: string[];
+  creatorId: string;
+  creatorUsername: string;
+  creatorAvatar: string;
   colors?: string[];
   rating?: number;
   reviews?: number;
@@ -23,13 +26,19 @@ export interface VideoFeed {
   description: string;
   hashtags: string[];
   musicTitle: string;
+  processType?: string;
   product?: Product;
   isLive?: boolean;
   similarReels?: VideoFeed[];
 }
 
 export interface BasketItem {
+  orderId: string;
   product: Product;
+  finalPrice: number;
+  sellerName: string;
+  paymentConfirmed: boolean;
+  orderStatus: 'Negotiating' | 'Paid' | 'Shipped';
   quantity: number;
   selectedSize?: string;
   selectedColor?: string;

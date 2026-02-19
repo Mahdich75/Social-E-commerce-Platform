@@ -5,8 +5,9 @@ import { useBasketStore } from '../store/useBasketStore';
 import { toast } from 'sonner';
 
 export function BottomNav() {
-  const ICON_CONTAINER_SIZE = 28;
+  const ICON_CONTAINER_SIZE = 30;
   const NAV_ICON_SIZE = 24;
+  const CENTER_ICON_SIZE = 26;
   const NAV_ICON_STROKE = 2.25;
   const location = useLocation();
   const totalItems = useBasketStore(state => state.getTotalItems());
@@ -91,7 +92,10 @@ export function BottomNav() {
       />
 
       {isCreateMenuOpen && (
-        <div className="fixed inset-0 z-40" aria-hidden="true" />
+        <div
+          className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-[1px] transition-opacity duration-200"
+          aria-hidden="true"
+        />
       )}
 
       <div
@@ -102,27 +106,29 @@ export function BottomNav() {
             : 'opacity-0 translate-y-3 pointer-events-none'
         }`}
       >
-        <div className="rounded-2xl border border-white/20 bg-white/16 backdrop-blur-xl shadow-[0_20px_45px_rgba(0,0,0,0.35)] p-2">
+        {/* Root cause: labels/icons were white on a translucent light surface, so contrast collapsed on white screens.
+            Fix: use tokenized popover surface + foreground text + subtle scrim for consistent WCAG-friendly readability. */}
+        <div className="rounded-2xl border border-border/80 bg-popover/95 text-popover-foreground backdrop-blur-xl shadow-[0_20px_45px_rgba(0,0,0,0.28)] p-2">
           <button
             type="button"
             onClick={() => handleCreateAction('review')}
-            className="w-full text-left px-3 py-3 rounded-xl text-white hover:bg-white/15 transition-colors"
+            className="w-full text-left px-3 py-3 rounded-xl hover:bg-accent transition-colors ui-pressable ui-focus-ring"
           >
             <p className="text-sm font-semibold">Upload Product Review</p>
-            <p className="text-[11px] text-zinc-300 mt-0.5">Share your experience with a product</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Share your experience with a product</p>
           </button>
           <button
             type="button"
             onClick={() => handleCreateAction('showcase')}
-            className="w-full text-left px-3 py-3 rounded-xl text-white hover:bg-white/15 transition-colors"
+            className="w-full text-left px-3 py-3 rounded-xl hover:bg-accent transition-colors ui-pressable ui-focus-ring"
           >
             <p className="text-sm font-semibold">Upload Product Showcase Video</p>
-            <p className="text-[11px] text-zinc-300 mt-0.5">Post a short product presentation reel</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Post a short product presentation reel</p>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-5 h-20 max-w-[414px] mx-auto">
+      <div className="flex items-center justify-around h-[var(--bottom-nav-height)] max-w-[414px] mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -134,15 +140,18 @@ export function BottomNav() {
                 ref={createButtonRef}
                 type="button"
                 onClick={() => setIsCreateMenuOpen((prev) => !prev)}
-                className="h-full w-full flex items-center justify-center"
+                className="h-full flex-1 flex items-center justify-center ui-pressable ui-focus-ring"
                 aria-label="Open create actions"
                 aria-expanded={isCreateMenuOpen}
                 aria-haspopup="menu"
               >
-                <div className="relative -translate-y-1.5">
+                <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-red-500 to-cyan-400 rounded-lg blur-sm opacity-75" />
-                  <div className="relative bg-white rounded-lg w-9 h-9 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-black" strokeWidth={NAV_ICON_STROKE} />
+                  <div
+                    className="relative bg-white rounded-lg flex items-center justify-center"
+                    style={{ width: ICON_CONTAINER_SIZE, height: ICON_CONTAINER_SIZE, lineHeight: 1 }}
+                  >
+                    <Icon size={CENTER_ICON_SIZE} className="text-black" strokeWidth={NAV_ICON_STROKE} />
                   </div>
                 </div>
               </button>
@@ -153,16 +162,15 @@ export function BottomNav() {
             <Link
               key={item.path}
               to={item.path}
-              className="h-full w-full flex flex-col items-center justify-center gap-1.5"
+              className="h-full flex-1 flex items-center justify-center ui-pressable ui-focus-ring"
             >
               <div
                 className="relative flex items-center justify-center"
-                style={{ width: ICON_CONTAINER_SIZE, height: ICON_CONTAINER_SIZE }}
+                style={{ width: ICON_CONTAINER_SIZE, height: ICON_CONTAINER_SIZE, lineHeight: 1 }}
               >
                 <Icon 
                   size={NAV_ICON_SIZE}
                   className={isActive ? 'text-white' : 'text-zinc-400'}
-                  style={item.path === '/basket' ? { transform: 'scale(1.14)' } : undefined}
                   strokeWidth={NAV_ICON_STROKE}
                 />
                 {item.badge && item.badge > 0 && (

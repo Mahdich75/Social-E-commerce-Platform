@@ -1,22 +1,79 @@
-﻿import { useState, useRef, useEffect } from 'react';
-import { Settings, Grid, Package, Star, Heart, Video, Upload } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Settings, Grid, Package, Heart, Video, Upload, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useWishlistStore } from '../store/useWishlistStore';
 import { ProductDrawer } from '../components/ProductDrawer';
 import { Product } from '../types';
-import { mockProducts, mockVideos } from '../data/mockData';
+import { mockCreators, mockProducts, mockVideos } from '../data/mockData';
 import { formatPriceToman } from '../utils/price';
+import { useNavigate, useSearchParams } from 'react-router';
+import { useFollowStore } from '../store/useFollowStore';
 
 export default function Profile() {
-  const profileUsername = 'shirinbuttons';
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rawProfileUser = searchParams.get('user') ?? 'shirinbuttons';
+  const profileUsername = rawProfileUser.replace(/^@/, '');
+  const toggleFollow = useFollowStore((state) => state.toggleFollow);
+  const isFollowing = useFollowStore((state) => state.isFollowing);
+  const followedUsernames = useFollowStore((state) => state.followedUsernames);
   const { items: wishlistItems } = useWishlistStore();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductDrawerOpen, setIsProductDrawerOpen] = useState(false);
+  const [peopleSheet, setPeopleSheet] = useState<'followers' | 'following' | null>(null);
   const introReel = mockVideos.find((video) => video.id === '15');
   const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(introReel?.videoUrl ?? null);
   const [introVideoName, setIntroVideoName] = useState(introReel?.product?.name ?? 'intro_video.mp4');
   const introFileInputRef = useRef<HTMLInputElement>(null);
   const introVideoRef = useRef<HTMLVideoElement>(null);
+  const profileCreator = mockCreators.find((creator) => creator.username === profileUsername);
+  const profileAvatar = profileCreator?.avatar ?? `${import.meta.env.BASE_URL}pics/profile/avatar.jpg`;
+  const isOwnProfile = profileUsername === 'shirinbuttons';
+
+  const followersList = useMemo(
+    () => [
+      { username: 'golsare_nazi', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar1.jpg` },
+      { username: 'style_guru', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar3.jpg` },
+      { username: 'beauty_daily', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar3.jpg` },
+      { username: 'tech_hub', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar1.jpg` },
+      ...followedUsernames
+        .filter((username) => username !== profileUsername)
+        .slice(0, 4)
+        .map((username) => ({
+          username,
+          avatar:
+            mockCreators.find((creator) => creator.username === username)?.avatar ??
+            `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg`,
+        })),
+    ],
+    [followedUsernames, profileUsername]
+  );
+
+  const followingList = useMemo(
+    () => [
+      { username: 'puzzle_gallery', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar1.jpg` },
+      { username: 'massage_corner', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg` },
+      { username: 'olenz_ir', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg` },
+      { username: 'niloofar_daily', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar4.jpg` },
+      ...followedUsernames.slice(0, 8).map((username) => ({
+        username,
+        avatar:
+          mockCreators.find((creator) => creator.username === username)?.avatar ??
+          `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg`,
+      })),
+    ],
+    [followedUsernames]
+  );
+
+  const followersCount = useMemo(() => {
+    const base = profileUsername === 'shirinbuttons' ? 2400000 : 18600;
+    return base + (followedUsernames.includes(profileUsername) ? 1 : 0);
+  }, [followedUsernames, profileUsername]);
+
+  const followingCount = useMemo(() => {
+    const base = profileUsername === 'shirinbuttons' ? 382 : 146;
+    return base + (isOwnProfile ? followedUsernames.length : 0);
+  }, [followedUsernames.length, isOwnProfile, profileUsername]);
 
   useEffect(() => {
     return () => {
@@ -76,40 +133,32 @@ export default function Profile() {
   return (
     <>
       <div className="min-h-screen bg-white pb-24">
-        {/* Header with Stats */}
         <div className="px-4 pt-12 pb-6 border-b border-zinc-200">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold">Profile</h1>
-            <button className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
+            <button className="p-2 hover:bg-zinc-100 rounded-full transition-colors ui-pressable ui-focus-ring">
               <Settings className="w-6 h-6" />
             </button>
           </div>
 
-          {/* Intro Video */}
           <div className="mb-5">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-base font-bold flex items-center gap-2">
                 <Video className="w-4 h-4" />
                 Intro Video
               </h2>
-              <input
-                ref={introFileInputRef}
-                type="file"
-                accept="video/*"
-                className="hidden"
-                onChange={handleUploadIntroVideo}
-              />
+              <input ref={introFileInputRef} type="file" accept="video/*" className="hidden" onChange={handleUploadIntroVideo} />
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleOpenVideoPicker}
-                  className="text-xs font-semibold px-3 py-1.5 bg-black text-white rounded-full hover:bg-zinc-800 transition-colors"
+                  className="text-xs font-semibold px-3 py-1.5 bg-black text-white rounded-full hover:bg-zinc-800 transition-colors ui-pressable ui-focus-ring"
                 >
                   {introVideoUrl ? 'Replace' : 'Upload'}
                 </button>
                 {introVideoUrl && (
                   <button
                     onClick={handleRemoveIntroVideo}
-                    className="text-xs font-semibold px-3 py-1.5 border border-zinc-300 rounded-full hover:bg-zinc-50 transition-colors"
+                    className="text-xs font-semibold px-3 py-1.5 border border-zinc-300 rounded-full hover:bg-zinc-50 transition-colors ui-pressable ui-focus-ring"
                   >
                     Remove
                   </button>
@@ -133,7 +182,6 @@ export default function Profile() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/10 to-black/65" />
                   <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/75 to-transparent" />
-
                   <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/35 text-white/90 text-xs backdrop-blur-sm border border-white/20">
                     Introduction
                   </div>
@@ -141,7 +189,7 @@ export default function Profile() {
                   <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
                     <div className="flex items-end justify-center sm:justify-start gap-3">
                       <img
-                        src={`${import.meta.env.BASE_URL}pics/profile/avatar.jpg`}
+                        src={profileAvatar}
                         alt={profileUsername}
                         className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-white/80 shadow-[0_0_0_6px_rgba(255,255,255,0.12)] object-cover"
                       />
@@ -156,7 +204,7 @@ export default function Profile() {
             ) : (
               <button
                 onClick={handleOpenVideoPicker}
-                className="w-full rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 py-8 px-4 text-center hover:border-zinc-500 transition-colors"
+                className="w-full rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 py-8 px-4 text-center hover:border-zinc-500 transition-colors ui-pressable ui-focus-ring"
               >
                 <Upload className="w-8 h-8 mx-auto mb-2 text-zinc-500" />
                 <p className="text-sm font-semibold text-zinc-700">Add your introduction video</p>
@@ -165,21 +213,33 @@ export default function Profile() {
             )}
           </div>
 
-          {/* Stats */}
           <div className="flex items-center justify-around py-4 bg-zinc-50 rounded-xl">
-            <div className="text-center">
-              <p className="text-2xl font-bold">2.4M</p>
+            <button type="button" onClick={() => setPeopleSheet('followers')} className="text-center ui-pressable ui-focus-ring">
+              <p className="text-2xl font-bold">{Intl.NumberFormat('en-US').format(followersCount)}</p>
               <p className="text-xs text-zinc-600">Followers</p>
-            </div>
+            </button>
             <div className="w-px h-10 bg-zinc-200" />
-            <div className="text-center">
-              <p className="text-2xl font-bold">382</p>
+            <button type="button" onClick={() => setPeopleSheet('following')} className="text-center ui-pressable ui-focus-ring">
+              <p className="text-2xl font-bold">{Intl.NumberFormat('en-US').format(followingCount)}</p>
               <p className="text-xs text-zinc-600">Following</p>
-            </div>
+            </button>
+            {!isOwnProfile && (
+              <>
+                <div className="w-px h-10 bg-zinc-200" />
+                <button
+                  type="button"
+                  onClick={() => toggleFollow(profileUsername)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+                    isFollowing(profileUsername) ? 'bg-zinc-200 text-zinc-800' : 'bg-black text-white'
+                  } ui-pressable ui-focus-ring`}
+                >
+                  {isFollowing(profileUsername) ? 'Following' : 'Follow'}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Tabs */}
         <Tabs defaultValue="reels" className="w-full">
           <TabsList className="w-full grid grid-cols-3 h-12 bg-white border-b border-zinc-200 rounded-none">
             <TabsTrigger value="reels" className="flex items-center gap-2">
@@ -190,9 +250,9 @@ export default function Profile() {
               <Package className="w-4 h-4" />
               <span className="text-sm">Products</span>
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="flex items-center gap-2">
-              <Star className="w-4 h-4" />
-              <span className="text-sm">Reviews</span>
+            <TabsTrigger value="wishlist" className="flex items-center gap-2">
+              <Heart className="w-4 h-4" />
+              <span className="text-sm">Wishlist</span>
             </TabsTrigger>
           </TabsList>
 
@@ -200,11 +260,7 @@ export default function Profile() {
             <div className="grid grid-cols-3 gap-1 p-1">
               {mockVideos.map((video) => (
                 <div key={video.id} className="aspect-[9/16] bg-zinc-100 relative overflow-hidden">
-                  <img
-                    src={video.thumbnail}
-                    alt="Video"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={video.thumbnail} alt="Video" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -216,19 +272,24 @@ export default function Profile() {
                 <button
                   key={product.id}
                   onClick={() => handleWishlistItemClick(product)}
-                  className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden border border-white/35 shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:bg-white/40 transition-colors text-left"
+                  className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden border border-white/35 shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:bg-white/40 transition-colors text-left ui-surface ui-pressable ui-focus-ring"
                 >
                   <div className="aspect-square bg-zinc-100 relative overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="p-3">
-                    <h3 className="font-semibold text-sm line-clamp-2 mb-1">
-                      {product.name}
-                    </h3>
+                    <h3 className="font-semibold text-sm line-clamp-2 mb-1">{product.name}</h3>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/profile?user=${encodeURIComponent(product.creatorUsername)}`);
+                      }}
+                      className="mb-1 inline-flex items-center gap-1.5"
+                    >
+                      <img src={product.creatorAvatar} alt={product.creatorUsername} className="w-4 h-4 rounded-full object-cover" />
+                      <span className="text-[11px] text-zinc-600">@{product.creatorUsername}</span>
+                    </button>
                     <p className="text-base font-bold">{formatPriceToman(product.price)}</p>
                   </div>
                 </button>
@@ -236,87 +297,87 @@ export default function Profile() {
             </div>
           </TabsContent>
 
-          <TabsContent value="reviews" className="mt-0 p-4">
-            <div className="space-y-4" dir="rtl">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white border border-zinc-200 rounded-xl p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <img
-                      src={`https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&seed=${i}`}
-                      alt="Reviewer"
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-right">دکمه فانتزی دست‌ساز</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        ))}
+          <TabsContent value="wishlist" className="mt-0 p-4">
+            {wishlistItems.length === 0 ? (
+              <div className="text-center py-8">
+                <Heart className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <p className="text-zinc-600">Your wishlist is empty</p>
+                <p className="text-sm text-zinc-400 mt-1">Save products you love</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                {wishlistItems.map((item) => (
+                  <button
+                    key={item.product.id}
+                    onClick={() => handleWishlistItemClick(item.product)}
+                    className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden border border-white/35 shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:bg-white/40 transition-colors text-left"
+                  >
+                    <div className="aspect-square bg-zinc-100 relative overflow-hidden">
+                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                      <div className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full">
+                        <Heart className="w-3 h-3 fill-white" />
                       </div>
                     </div>
-                  </div>
-                  <p className="text-sm text-zinc-600 text-right">
-                    خیلی قشنگه 😍 کارِ دست؟ فوق‌العاده‌ست 👏 رنگ‌بندی‌ها دلبره 💙✨
-                  </p>
-                </div>
-              ))}
-            </div>
+                    <div className="p-3">
+                      <h3 className="font-semibold text-sm line-clamp-2 mb-1">{item.product.name}</h3>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/profile?user=${encodeURIComponent(item.product.creatorUsername)}`);
+                        }}
+                        className="mb-1 inline-flex items-center gap-1.5"
+                      >
+                        <img src={item.product.creatorAvatar} alt={item.product.creatorUsername} className="w-4 h-4 rounded-full object-cover" />
+                        <span className="text-[11px] text-zinc-600">@{item.product.creatorUsername}</span>
+                      </button>
+                      <p className="text-base font-bold">{formatPriceToman(item.product.price)}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
+      </div>
 
-        {/* Wishlist Section */}
-        <div className="px-4 py-6 border-t-8 border-zinc-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Heart className="w-5 h-5" />
-              Wishlist
-            </h2>
-            <span className="text-sm text-zinc-600">{wishlistItems.length} items</span>
-          </div>
+      <ProductDrawer product={selectedProduct} open={isProductDrawerOpen} onOpenChange={setIsProductDrawerOpen} />
 
-          {wishlistItems.length === 0 ? (
-            <div className="text-center py-8">
-              <Heart className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
-              <p className="text-zinc-600">Your wishlist is empty</p>
-              <p className="text-sm text-zinc-400 mt-1">Save products you love</p>
+      {peopleSheet && (
+        <div className="fixed inset-0 z-30 bg-black/35" onClick={() => setPeopleSheet(null)}>
+          <div
+            className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[414px] bg-white rounded-t-2xl border border-zinc-200 max-h-[68vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+              <p className="font-bold">{peopleSheet === 'followers' ? 'Followers' : 'Following'}</p>
+              <button
+                type="button"
+                onClick={() => setPeopleSheet(null)}
+                className="w-8 h-8 rounded-full hover:bg-zinc-100 flex items-center justify-center ui-pressable ui-focus-ring"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              {wishlistItems.map((item) => (
+            <div className="overflow-y-auto max-h-[calc(68vh-3.5rem)] divide-y divide-zinc-100">
+              {(peopleSheet === 'followers' ? followersList : followingList).map((person) => (
                 <button
-                  key={item.product.id}
-                  onClick={() => handleWishlistItemClick(item.product)}
-                  className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden border border-white/35 shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:bg-white/40 transition-colors text-left"
+                  key={`${peopleSheet}-${person.username}`}
+                  type="button"
+                  onClick={() => {
+                    setPeopleSheet(null);
+                    navigate(`/profile?user=${encodeURIComponent(person.username)}`);
+                  }}
+                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-zinc-50 ui-pressable ui-focus-ring"
                 >
-                  <div className="aspect-square bg-zinc-100 relative overflow-hidden">
-                    <img
-                      src={item.product.image}
-                      alt={item.product.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full">
-                      <Heart className="w-3 h-3 fill-white" />
-                    </div>
-                  </div>
-                  <div className="p-3">
-                    <h3 className="font-semibold text-sm line-clamp-2 mb-1">
-                      {item.product.name}
-                    </h3>
-                    <p className="text-base font-bold">{formatPriceToman(item.product.price)}</p>
-                  </div>
+                  <img src={person.avatar} alt={person.username} className="w-10 h-10 rounded-full object-cover" />
+                  <p className="font-semibold text-sm">@{person.username}</p>
                 </button>
               ))}
             </div>
-          )}
+          </div>
         </div>
-      </div>
-
-      <ProductDrawer
-        product={selectedProduct}
-        open={isProductDrawerOpen}
-        onOpenChange={setIsProductDrawerOpen}
-      />
+      )}
     </>
   );
 }
-

@@ -1,17 +1,19 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, Bookmark, Heart, MessageCircle, MessageSquare, Share2, ShoppingBag, Volume2, VolumeX } from 'lucide-react';
-import { Link } from 'react-router';
-import { mockVideos } from '../data/mockData';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { mockVideos, reelCommentsFa } from '../data/mockData';
 import { ProductDrawer } from '../components/ProductDrawer';
 import { CommentsDrawer } from '../components/CommentsDrawer';
 import { SwipeGuide } from '../components/SwipeGuide';
-import { useBasketStore } from '../store/useBasketStore';
 import { useReelStore } from '../store/useReelStore';
 import { useWishlistStore } from '../store/useWishlistStore';
 import { Product, VideoFeed } from '../types';
 import { toast } from 'sonner';
 import { sanitizeCaptionText } from '../utils/sanitizeCaption';
 import { formatPriceToman } from '../utils/price';
+import { useCommerceChatStore } from '../store/useCommerceChatStore';
+import { sortByUsefulness } from '../utils/commentInsights';
+import { useFollowStore } from '../store/useFollowStore';
 
 interface FeedRow {
   rowId: string;
@@ -25,26 +27,49 @@ const DENTAL_LIGHT_PRODUCT_NAME = 'کیت نور دوقلوی دندانپزشک
 const EVERDELL_PRODUCT_NAME = 'بازی فکری Everdell';
 const BIRD_CAMERA_PRODUCT_NAME = 'دوربین پرنده';
 const HIDDEN_REEL_PRODUCT_NAMES = ['روبوتایم طرح کافه'];
+const PROCESS_STAGE_ORDER: Record<string, number> = {
+  intro: 1,
+  build: 2,
+  usage: 3,
+  comparison: 4,
+  detail: 5,
+  benefit: 6,
+  before_after: 7,
+  result: 8,
+};
+const COMMENT_PREVIEW_USERS = [
+  { username: 'niloofar.shop', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
+  { username: 'amir_style', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43d?w=100&h=100&fit=crop' },
+  { username: 'sara.market', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop' },
+  { username: 'mobin.review', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop' },
+  { username: 'parisa_buy', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop' },
+  { username: 'zahra.kala', avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop' },
+  { username: 'omid.store', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop' },
+] as const;
 
 export default function Home() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductDrawerOpen, setIsProductDrawerOpen] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [commentsVideoId, setCommentsVideoId] = useState<string>(mockVideos[0]?.id ?? '');
-  const [expandedCaptionKey, setExpandedCaptionKey] = useState<string | null>(null);
   const [horizontalPositions, setHorizontalPositions] = useState<Record<number, number>>({});
   const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreenVideo, setIsFullscreenVideo] = useState(false);
   const globalVolume = 0.9;
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const horizontalRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
 
-  const { addToBasket } = useBasketStore();
   const { toggleLike, isLiked } = useReelStore();
+  const startPurchaseChat = useCommerceChatStore((state) => state.startPurchaseChat);
   const wishlistItems = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
+  const toggleFollow = useFollowStore((state) => state.toggleFollow);
+  const isFollowing = useFollowStore((state) => state.isFollowing);
 
   const sanitizedVideoById = useMemo(() => {
     return Object.fromEntries(
@@ -92,7 +117,12 @@ export default function Home() {
       rowId: `product-${productId}`,
       kind: 'product',
       product: reels[0]?.product,
-      reels,
+      reels: reels.slice().sort((a, b) => {
+        const stageA = PROCESS_STAGE_ORDER[a.processType ?? ''] ?? Number.MAX_SAFE_INTEGER;
+        const stageB = PROCESS_STAGE_ORDER[b.processType ?? ''] ?? Number.MAX_SAFE_INTEGER;
+        if (stageA !== stageB) return stageA - stageB;
+        return a.id.localeCompare(b.id);
+      }),
     }));
 
     const featuredRows = productRowsRaw.filter((row) => FEATURED_PRODUCT_NAMES.includes(row.product?.name ?? ''));
@@ -174,7 +204,7 @@ export default function Home() {
         return rankA - rankB;
       });
 
-    const orderedRows: FeedRow[] = [...sortFeatured(featuredRows), ...conceptRows, ...multiReelRows];
+    const orderedRows: FeedRow[] = [...sortFeatured(featuredRows), ...multiReelRows, ...conceptRows];
     const moveToLastRowProductNames = [DENTAL_LIGHT_PRODUCT_NAME, BIRD_CAMERA_PRODUCT_NAME];
     const movedLastRowReels: VideoFeed[] = [];
 
@@ -251,6 +281,42 @@ export default function Home() {
     return rowsWithoutPrioritized;
   }, [baseReels]);
 
+  useEffect(() => {
+    const targetReelId = searchParams.get('reel');
+    if (!targetReelId || productRows.length === 0) return;
+
+    let targetRow = -1;
+    let targetCol = -1;
+    for (let rowIndex = 0; rowIndex < productRows.length; rowIndex += 1) {
+      const colIndex = productRows[rowIndex].reels.findIndex((video) => video.id === targetReelId);
+      if (colIndex !== -1) {
+        targetRow = rowIndex;
+        targetCol = colIndex;
+        break;
+      }
+    }
+
+    if (targetRow === -1 || targetCol === -1) return;
+
+    setActiveIndex(targetRow);
+    setHorizontalPositions((prev) => {
+      if ((prev[targetRow] ?? 0) === targetCol) return prev;
+      return { ...prev, [targetRow]: targetCol };
+    });
+
+    requestAnimationFrame(() => {
+      const vertical = scrollRef.current;
+      if (vertical) {
+        vertical.scrollTo({ top: targetRow * vertical.clientHeight, behavior: 'auto' });
+      }
+
+      const horizontal = horizontalRefs.current[targetRow];
+      if (horizontal) {
+        horizontal.scrollTo({ left: targetCol * horizontal.clientWidth, behavior: 'auto' });
+      }
+    });
+  }, [productRows, searchParams]);
+
   const activeRow = productRows[activeIndex];
   const activeHorizontal = horizontalPositions[activeIndex] ?? 0;
   const activeVideo = activeRow?.reels[activeHorizontal] ?? activeRow?.reels[0] ?? baseReels[0];
@@ -283,7 +349,6 @@ export default function Home() {
       const nextIndex = Math.max(0, Math.min(productRows.length - 1, Math.round(target.scrollTop / viewportHeight)));
       if (nextIndex !== activeIndex) {
         setActiveIndex(nextIndex);
-        setExpandedCaptionKey(null);
       }
     },
     [activeIndex, productRows.length]
@@ -372,6 +437,15 @@ export default function Home() {
     setCommentsVideoId(activeVideo.id);
   }, [activeVideo?.id]);
 
+  useEffect(() => {
+    const handleFullscreen = () => {
+      setIsFullscreenVideo(Boolean(document.fullscreenElement));
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreen);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreen);
+  }, []);
+
   const handleLike = (video: VideoFeed) => {
     const wasLiked = isLiked(video.id);
     toggleLike(video.id);
@@ -386,8 +460,9 @@ export default function Home() {
 
   const handleQuickAddToCart = (product?: Product) => {
     if (!product) return;
-    addToBasket(product, product.sizes[0], product.colors?.[0]);
-    toast.success('Added to cart!');
+    const conversationId = startPurchaseChat({ product });
+    toast.success('Continue purchase in chat');
+    navigate(`/messages?conversation=${conversationId}`);
   };
 
   const handleWishlistToggle = (product?: Product) => {
@@ -411,16 +486,46 @@ export default function Home() {
   const dynamicComments = useMemo(() => {
     const video = baseReels.find((item) => item.id === commentsVideoId) ?? activeVideo;
     const product = video?.product;
-    if (!product) return undefined;
+    const reelComments = video ? reelCommentsFa[video.id] ?? [] : [];
+    if (!product) return reelComments.length > 0 ? reelComments : undefined;
 
-    return [
+    const productComments = [
       `${product.name} خیلی قشنگه 😍`,
-      `برای ${product.category} کیفیتش عالیه، کسی خریده؟`,
-      `قیمت ${product.name} نسبت به بازار خوبه؟`,
-      `این محصول رو موجود دارید؟ می‌خوام سفارش بدم 🛒`,
-      `رنگ‌بندی/مدل دیگه برای ${product.name} هم هست؟`,
+      `از @${product.creatorUsername} کسی خرید داشته؟ برای ${product.category} کیفیتش چطوره؟`,
+      `قیمت ${product.name} که @${product.creatorUsername} گذاشته نسبت به بازار خوبه؟`,
+      `@${product.creatorUsername} این محصول رو موجود دارید؟ می‌خوام سفارش بدم 🛒`,
+      `@${product.creatorUsername} رنگ‌بندی/مدل دیگه برای ${product.name} هم هست؟`,
     ];
+
+    const mergedComments = [...reelComments, ...productComments].filter(
+      (text, index, all) => all.findIndex((item) => item === text) === index
+    );
+
+    return mergedComments.length > 0 ? mergedComments : undefined;
   }, [activeVideo, baseReels, commentsVideoId]);
+
+  const inlineCommentsByVideoId = useMemo(() => {
+    const entries = baseReels.map((video) => {
+      const comments = reelCommentsFa[video.id] ?? [];
+      if (comments.length === 0) return [video.id, []] as const;
+
+      const ranked = sortByUsefulness(comments.map((text, index) => ({ text, likes: 20 + index * 4 })))
+        .slice(0, 5)
+        .map((item, index) => {
+          const reelSeed = video.id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+          const user = COMMENT_PREVIEW_USERS[(reelSeed + index) % COMMENT_PREVIEW_USERS.length];
+          return {
+            username: user.username,
+            avatar: user.avatar,
+            text: item.text,
+          };
+        });
+
+      return [video.id, ranked] as const;
+    });
+
+    return Object.fromEntries(entries) as Record<string, Array<{ username: string; avatar: string; text: string }>>;
+  }, [baseReels]);
 
   return (
     <>
@@ -447,11 +552,12 @@ export default function Home() {
                   {row.reels.map((video, reelIndex) => {
                     const currentProduct = video.product ?? row.product;
                     const currentIsLiked = isLiked(video.id);
+                    const isFollowingPage = isFollowing(video.username);
                     const isWishlisted = currentProduct
                       ? wishlistItems.some((item) => item.product.id === currentProduct.id)
                       : false;
-                    const captionKey = `${rowIndex}-${reelIndex}`;
-                    const isCaptionExpanded = expandedCaptionKey === captionKey;
+                    const inlineComments = inlineCommentsByVideoId[video.id] ?? [];
+                    const visibleInlineComments = inlineComments.slice(0, 2);
 
                     return (
                       <article
@@ -486,14 +592,25 @@ export default function Home() {
                         )}
 
                         <div className="absolute right-0 top-[56%] -translate-y-1/2 w-20 flex flex-col items-center gap-4 z-30 pointer-events-none">
-                          <div className="relative">
+                          <button
+                            onClick={() => {
+                              toggleFollow(video.username);
+                              toast.success(isFollowingPage ? `Unfollowed @${video.username}` : `Followed @${video.username}`);
+                            }}
+                            className="relative pointer-events-auto ui-pressable ui-focus-ring"
+                            aria-label={isFollowingPage ? `Unfollow ${video.username}` : `Follow ${video.username}`}
+                          >
                             <img src={video.userAvatar} alt={video.username} className="w-11 h-11 rounded-full border-2 border-white" />
-                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-black">
-                              <span className="text-white text-xs font-bold">+</span>
+                            <div
+                              className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full flex items-center justify-center border-2 border-black ${
+                                isFollowingPage ? 'bg-emerald-500' : 'bg-red-500'
+                              }`}
+                            >
+                              <span className="text-white text-xs font-bold">{isFollowingPage ? '✓' : '+'}</span>
                             </div>
-                          </div>
+                          </button>
 
-                          <button onClick={() => handleLike(video)} className="flex flex-col items-center gap-1 w-full pointer-events-auto">
+                          <button onClick={() => handleLike(video)} className="flex flex-col items-center gap-1 w-full pointer-events-auto ui-pressable ui-focus-ring">
                             <Heart className={`w-8 h-8 ${currentIsLiked ? 'fill-red-500 text-red-500' : 'text-white'}`} strokeWidth={2} />
                             <span className="text-white text-xs font-semibold text-center w-full leading-none">
                               {formatNumber(video.likes + (currentIsLiked ? 1 : 0))}
@@ -505,7 +622,7 @@ export default function Home() {
                               setCommentsVideoId(video.id);
                               setIsCommentsOpen(true);
                             }}
-                            className="flex flex-col items-center gap-1 active:scale-90 transition-transform w-full pointer-events-auto"
+                            className="flex flex-col items-center gap-1 active:scale-90 transition-transform w-full pointer-events-auto ui-focus-ring"
                           >
                             <MessageCircle className="w-8 h-8 text-white" strokeWidth={2} />
                             <span className="text-white text-xs font-semibold text-center w-full leading-none">
@@ -513,19 +630,19 @@ export default function Home() {
                             </span>
                           </button>
 
-                          <button className="flex flex-col items-center gap-1 w-full pointer-events-auto">
+                          <button className="flex flex-col items-center gap-1 w-full pointer-events-auto ui-pressable ui-focus-ring">
                             <Share2 className="w-7 h-7 text-white" strokeWidth={2} />
                             <span className="text-white text-xs font-semibold text-center w-full leading-none">Share</span>
                           </button>
 
-                          <button onClick={() => handleWishlistToggle(currentProduct)} className="flex flex-col items-center gap-1 w-full pointer-events-auto">
+                          <button onClick={() => handleWishlistToggle(currentProduct)} className="flex flex-col items-center gap-1 w-full pointer-events-auto ui-pressable ui-focus-ring">
                             <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
                               <Bookmark className={`w-5 h-5 ${isWishlisted ? 'fill-white text-white' : 'text-white'}`} strokeWidth={2} />
                             </div>
                             <span className="text-white text-[10px] font-semibold text-center w-full leading-none">Wishlist</span>
                           </button>
 
-                          <button onClick={() => handleQuickAddToCart(currentProduct)} className="flex flex-col items-center gap-1 w-full pointer-events-auto">
+                          <button onClick={() => handleQuickAddToCart(currentProduct)} className="flex flex-col items-center gap-1 w-full pointer-events-auto ui-pressable ui-focus-ring">
                             <div className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-lg">
                               <ShoppingBag className="w-5 h-5" />
                             </div>
@@ -533,60 +650,66 @@ export default function Home() {
                           </button>
                         </div>
 
-                        <div className="absolute bottom-24 left-0 right-0 px-4 z-10 pointer-events-none">
-                          <div className="mb-2">
-                            <p className="text-white font-bold text-base">@{video.username}</p>
-                            <div className="mt-2 pr-24 pointer-events-auto">
-                              {!isCaptionExpanded ? (
-                                <div>
-                                  <p className="text-white text-sm leading-5 line-clamp-2">{video.description}</p>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {video.hashtags.slice(0, 3).map((tag, i) => (
-                                      <span key={i} className="text-white/90 font-semibold text-xs">
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  <button
-                                    onClick={() => setExpandedCaptionKey(captionKey)}
-                                    className="text-white/90 text-xs font-semibold mt-0.5 hover:text-white transition-colors"
-                                  >
-                                    See more
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="bg-black/45 backdrop-blur-sm rounded-xl px-3 py-2.5 max-h-32 overflow-y-auto">
-                                  <p className="text-white text-sm leading-5">{video.description}</p>
-                                  <div className="flex flex-wrap gap-1 mt-1.5">
-                                    {video.hashtags.map((tag, i) => (
-                                      <span key={i} className="text-white font-semibold text-sm">
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  <button
-                                    onClick={() => setExpandedCaptionKey(null)}
-                                    className="text-white/90 text-xs font-semibold mt-1.5 hover:text-white transition-colors"
-                                  >
-                                    Show less
-                                  </button>
-                                </div>
-                              )}
-                            </div>
+                        <div
+                          className="absolute left-0 right-0 px-4 z-10 pointer-events-none"
+                          // Keep feed product card above fixed bottom nav across mobile Chrome/PWA viewport changes.
+                          style={{ bottom: 'calc(var(--bottom-nav-offset) + 0.75rem)' }}
+                        >
+                          <div className="mb-2 pr-24 pointer-events-auto">
+                            <button
+                              onClick={() => navigate(`/profile?user=${encodeURIComponent(video.username)}`)}
+                              className="text-white font-bold text-base hover:text-white/85 transition-colors"
+                            >
+                              @{video.username}
+                            </button>
                           </div>
 
-                          {currentProduct && (
-                            <button
-                              onClick={() => handleProductClick(currentProduct)}
-                              className="inline-flex items-center gap-2.5 bg-white/30 backdrop-blur-md px-3 py-2.5 rounded-xl border border-white/35 shadow-[0_10px_28px_rgba(0,0,0,0.18)] pointer-events-auto max-w-[calc(100%-6rem)]"
+                          <button
+                            onClick={() => {
+                              setCommentsVideoId(video.id);
+                              setIsCommentsOpen(true);
+                            }}
+                            className="mb-2 max-w-[calc(100%-6rem)] w-full px-1 py-1 text-left pointer-events-auto ui-pressable ui-focus-ring"
+                          >
+                            <div
+                              className="space-y-1.5"
+                              style={{
+                                maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
+                                WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
+                              }}
                             >
-                              <img src={currentProduct.image} alt={currentProduct.name} className="w-10 h-10 rounded-md object-cover" />
-                              <div className="text-left">
-                                <p className="font-semibold text-xs leading-4 line-clamp-1">{currentProduct.name}</p>
-                                <p className="text-sm font-bold mt-0.5">{formatPriceToman(currentProduct.price)}</p>
-                              </div>
-                              <ShoppingBag className="w-4 h-4 ml-1" />
-                            </button>
+                              {visibleInlineComments.map((comment, idx) => (
+                                <div key={`${video.id}-inline-${idx}`} className="flex items-center gap-2">
+                                  <img src={comment.avatar} alt={comment.username} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+                                  <p className="text-[12px] text-white leading-4 line-clamp-1">
+                                    <span className="font-semibold mr-1">{comment.username}</span>
+                                    {comment.text}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                            {inlineComments.length > 2 && (
+                              <p className="text-[10px] text-white/75 mt-1">برای دیدن همه کامنت‌ها بزن</p>
+                            )}
+                          </button>
+
+                          {currentProduct && !isFullscreenVideo && (
+                            <div className="pointer-events-auto max-w-[calc(100%-6rem)] w-full">
+                              <button
+                                onClick={() => handleProductClick(currentProduct)}
+                                className="w-full text-left rounded-2xl bg-white/22 backdrop-blur-md shadow-[0_10px_26px_rgba(0,0,0,0.2)] px-3 py-2.5 flex items-center gap-2.5 ui-surface ui-pressable ui-focus-ring"
+                              >
+                                <img
+                                  src={currentProduct.image}
+                                  alt={currentProduct.name}
+                                  className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+                                />
+                                <div className="min-w-0">
+                                  <p className="text-sm text-white font-semibold leading-5 line-clamp-1">{currentProduct.name}</p>
+                                  <p className="text-xs text-white/85 mt-0.5 line-clamp-1">{formatPriceToman(currentProduct.price)}</p>
+                                </div>
+                              </button>
+                            </div>
                           )}
                         </div>
                       </article>
@@ -603,7 +726,7 @@ export default function Home() {
             <div className="flex items-center justify-between pointer-events-auto">
               <Link
                 to="/notifications"
-                className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors relative"
+                className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors relative ui-pressable ui-focus-ring"
                 aria-label="Open notifications"
               >
                 <Bell className="w-6 h-6 text-white" />
@@ -620,14 +743,14 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setIsMuted((prev) => !prev)}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
+                  className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors ui-pressable ui-focus-ring"
                   aria-label={isMuted ? 'Unmute videos' : 'Mute videos'}
                 >
                   {isMuted ? <VolumeX className="w-6 h-6 text-white" /> : <Volume2 className="w-6 h-6 text-white" />}
                 </button>
                 <Link
                   to="/messages"
-                  className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
+                  className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors ui-pressable ui-focus-ring"
                   aria-label="Open messages"
                 >
                   <MessageSquare className="w-6 h-6 text-white" />
