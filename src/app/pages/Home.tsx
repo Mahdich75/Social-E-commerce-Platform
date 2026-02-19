@@ -332,16 +332,6 @@ export default function Home() {
     [activeIndex, horizontalPositions]
   );
 
-  const preloadNearby = useCallback((reels: VideoFeed[]) => {
-    reels.forEach((reel) => {
-      const preloader = document.createElement('video');
-      preloader.src = reel.videoUrl;
-      preloader.preload = 'metadata';
-      preloader.muted = true;
-      preloader.playsInline = true;
-    });
-  }, []);
-
   const handleVerticalScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       const target = e.currentTarget;
@@ -392,57 +382,6 @@ export default function Home() {
       });
     };
   }, []);
-
-  useEffect(() => {
-    const row = productRows[activeIndex];
-    if (!row) return;
-
-    const position = horizontalPositions[activeIndex] ?? 0;
-    const nearby: VideoFeed[] = [];
-
-    if (row.reels[position - 1]) nearby.push(row.reels[position - 1]);
-    if (row.reels[position + 1]) nearby.push(row.reels[position + 1]);
-
-    const similar = activeVideo?.similarReels ?? [];
-    const rowVideoIds = new Set(row.reels.map((video) => video.id));
-    similar
-      .filter((video) => rowVideoIds.has(video.id))
-      .slice(0, 2)
-      .forEach((video) => nearby.push(video));
-
-    preloadNearby(
-      nearby.filter((candidate, index, all) => all.findIndex((item) => item.id === candidate.id) === index)
-    );
-  }, [activeIndex, activeVideo, horizontalPositions, preloadNearby, productRows]);
-
-  useEffect(() => {
-    const extra: VideoFeed[] = [];
-    [activeIndex - 1, activeIndex + 1].forEach((rowIndex) => {
-      const row = productRows[rowIndex];
-      if (!row) return;
-      const rowPos = horizontalPositions[rowIndex] ?? 0;
-      const center = row.reels[rowPos];
-      const left = row.reels[rowPos - 1];
-      const right = row.reels[rowPos + 1];
-      if (center) extra.push(center);
-      if (left) extra.push(left);
-      if (right) extra.push(right);
-    });
-
-    preloadNearby(
-      extra.filter((candidate, index, all) => all.findIndex((item) => item.id === candidate.id) === index)
-    );
-  }, [activeIndex, horizontalPositions, preloadNearby, productRows]);
-
-  useEffect(() => {
-    const container = horizontalRefs.current[activeIndex];
-    if (!container) return;
-
-    const targetPos = horizontalPositions[activeIndex] ?? 0;
-    const targetLeft = targetPos * container.clientWidth;
-    if (Math.abs(container.scrollLeft - targetLeft) < 2) return;
-    container.scrollTo({ left: targetLeft, behavior: 'auto' });
-  }, [activeIndex, horizontalPositions]);
 
   useEffect(() => {
     Object.entries(videoRefs.current).forEach(([key, video]) => {
@@ -681,7 +620,7 @@ export default function Home() {
                         <div
                           className="absolute left-0 right-0 px-4 z-10 pointer-events-none"
                           // Keep feed product card above fixed bottom nav across mobile Chrome/PWA viewport changes.
-                          style={{ bottom: 'var(--feed-product-bottom-offset)' }}
+                          style={{ bottom: 'max(var(--feed-product-bottom-offset), 8rem)' }}
                         >
                           <div className="mb-2 pr-24 pointer-events-auto w-[min(60vw,14.5rem)] max-w-[calc(100%-7.25rem)]">
                             <button
