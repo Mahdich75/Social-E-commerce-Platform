@@ -46,7 +46,6 @@ const COMMENT_PREVIEW_USERS = [
   { username: 'zahra.kala', avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop' },
   { username: 'omid.store', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop' },
 ] as const;
-const SNAP_COMMIT_THRESHOLD = 0.18;
 
 export default function Home() {
   const navigate = useNavigate();
@@ -354,10 +353,7 @@ export default function Home() {
       }
 
       verticalScrollRafRef.current = requestAnimationFrame(() => {
-        const raw = target.scrollTop / viewportHeight;
-        const snapped = Math.round(raw);
-        if (Math.abs(raw - snapped) > SNAP_COMMIT_THRESHOLD) return;
-
+        const snapped = Math.round(target.scrollTop / viewportHeight);
         const nextIndex = Math.max(0, Math.min(productRows.length - 1, snapped));
         if (nextIndex !== activeIndex) {
           setActiveIndex(nextIndex);
@@ -376,9 +372,7 @@ export default function Home() {
     }
 
     horizontalScrollRafRef.current[rowIndex] = requestAnimationFrame(() => {
-      const raw = target.scrollLeft / target.clientWidth;
-      const snapped = Math.round(raw);
-      if (Math.abs(raw - snapped) > SNAP_COMMIT_THRESHOLD) return;
+      const snapped = Math.round(target.scrollLeft / target.clientWidth);
 
       setHorizontalPositions((prev) => {
         if ((prev[rowIndex] ?? 0) === snapped) return prev;
@@ -447,7 +441,7 @@ export default function Home() {
     const targetPos = horizontalPositions[activeIndex] ?? 0;
     const targetLeft = targetPos * container.clientWidth;
     if (Math.abs(container.scrollLeft - targetLeft) < 2) return;
-    container.scrollTo({ left: targetLeft, behavior: 'smooth' });
+    container.scrollTo({ left: targetLeft, behavior: 'auto' });
   }, [activeIndex, horizontalPositions]);
 
   useEffect(() => {
@@ -581,7 +575,7 @@ export default function Home() {
                   }}
                   onScroll={(e) => handleHorizontalScroll(rowIndex, e)}
                   className="absolute inset-0 overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex overscroll-x-contain"
-                  style={{ touchAction: 'pan-x', WebkitOverflowScrolling: 'touch', scrollSnapStop: 'always' }}
+                  style={{ touchAction: 'auto', WebkitOverflowScrolling: 'touch', scrollSnapStop: 'always' }}
                 >
                   {row.reels.map((video, reelIndex) => {
                     const currentProduct = video.product ?? row.product;
@@ -689,7 +683,7 @@ export default function Home() {
                           // Keep feed product card above fixed bottom nav across mobile Chrome/PWA viewport changes.
                           style={{ bottom: 'var(--feed-product-bottom-offset)' }}
                         >
-                          <div className="mb-2 pr-24 pointer-events-auto w-[min(64vw,15.5rem)] max-w-[calc(100%-7rem)]">
+                          <div className="mb-2 pr-24 pointer-events-auto w-[min(60vw,14.5rem)] max-w-[calc(100%-7.25rem)]">
                             <button
                               onClick={() => navigate(`/profile?user=${encodeURIComponent(video.username)}`)}
                               className="text-white font-bold text-base hover:text-white/85 transition-colors"
@@ -703,7 +697,7 @@ export default function Home() {
                               setCommentsVideoId(video.id);
                               setIsCommentsOpen(true);
                             }}
-                            className="mb-2 w-[min(64vw,15.5rem)] max-w-[calc(100%-7rem)] px-1 py-1 text-left pointer-events-auto ui-pressable ui-focus-ring"
+                            className="mb-2 w-[min(60vw,14.5rem)] max-w-[calc(100%-7.25rem)] px-1 py-1 text-left pointer-events-auto ui-pressable ui-focus-ring"
                           >
                             <div
                               className="space-y-1.5"
@@ -728,7 +722,7 @@ export default function Home() {
                           </button>
 
                           {currentProduct && !isFullscreenVideo && (
-                            <div className="pointer-events-auto w-[min(64vw,15.5rem)] max-w-[calc(100%-7rem)]">
+                            <div className="pointer-events-auto w-[min(60vw,14.5rem)] max-w-[calc(100%-7.25rem)]">
                               <button
                                 onClick={() => handleProductClick(currentProduct)}
                                 className="w-full text-left rounded-2xl bg-white/22 backdrop-blur-md shadow-[0_10px_26px_rgba(0,0,0,0.2)] px-3 py-2.5 flex items-center gap-2.5 ui-surface ui-pressable ui-focus-ring"

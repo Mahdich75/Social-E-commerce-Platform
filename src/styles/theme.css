@@ -3,7 +3,8 @@
 :root {
   --bottom-nav-height: 5rem;
   --bottom-nav-offset: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
-  --feed-product-bottom-offset: calc(var(--bottom-nav-offset) + clamp(0.9rem, 2.4vh, 1.35rem));
+  --bottom-nav-actual-height: var(--bottom-nav-offset);
+  --feed-product-bottom-offset: calc(var(--bottom-nav-actual-height) + clamp(0.9rem, 2.4vh, 1.35rem));
   --motion-fast: 140ms;
   --motion-base: 200ms;
   --motion-slow: 260ms;

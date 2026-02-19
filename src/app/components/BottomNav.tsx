@@ -16,6 +16,7 @@ export function BottomNav() {
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const reviewPickerRef = useRef<HTMLInputElement | null>(null);
   const showcasePickerRef = useRef<HTMLInputElement | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
 
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
@@ -50,6 +51,28 @@ export function BottomNav() {
     };
   }, [isCreateMenuOpen]);
 
+  useEffect(() => {
+    const applyNavHeightVar = () => {
+      const navHeight = navRef.current?.offsetHeight;
+      if (!navHeight) return;
+      // Keep feed overlays above the real nav height across mobile Chrome/PWA viewport changes.
+      document.documentElement.style.setProperty('--bottom-nav-actual-height', `${navHeight}px`);
+    };
+
+    applyNavHeightVar();
+    window.addEventListener('resize', applyNavHeightVar);
+    window.visualViewport?.addEventListener('resize', applyNavHeightVar);
+
+    const observer = new ResizeObserver(() => applyNavHeightVar());
+    if (navRef.current) observer.observe(navRef.current);
+
+    return () => {
+      window.removeEventListener('resize', applyNavHeightVar);
+      window.visualViewport?.removeEventListener('resize', applyNavHeightVar);
+      observer.disconnect();
+    };
+  }, []);
+
   const handleCreateAction = (mode: 'review' | 'showcase') => {
     setIsCreateMenuOpen(false);
     if (mode === 'review') {
@@ -74,7 +97,7 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 pb-safe z-50">
+    <nav ref={navRef} className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 pb-safe z-50">
       <input
         ref={reviewPickerRef}
         type="file"
