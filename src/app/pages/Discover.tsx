@@ -23,11 +23,83 @@ type MapViewport = {
 };
 
 type MapPoint = { x: number; y: number; city: string };
-type AdvisorStep = 'recipient' | 'occasion' | 'budget' | 'style' | 'done';
+type AdvisorScenarioStep = { id: string; question: string; chips: string[] };
+type AdvisorScenario = {
+  id: string;
+  chip: string;
+  title: string;
+  triggerPatterns: string[];
+  seedPrompt: string;
+  steps: AdvisorScenarioStep[];
+  followUps: string[];
+  searchSeed: string;
+};
 type AdvisorMessage = { id: string; role: 'assistant' | 'user'; text: string };
 
 const SUGGESTION_CHIPS = ['Nearby', 'ترندهای امسال', 'استایل مینیمال', 'پیشنهاد برای عید ✨', 'چی با این رنگ ست میشه؟'];
 const JOURNEY_STARTER_CHIP = 'یه هدیه برای مادرم بخرم';
+const ADVISOR_SCENARIOS: AdvisorScenario[] = [
+  {
+    id: 'gift_mother',
+    chip: 'هدیه برای مادر',
+    title: 'سناریو: خرید هدیه برای مادر',
+    triggerPatterns: ['هدیه', 'مادر', 'مامان'],
+    seedPrompt: 'می‌خوام برای مادرم یه هدیه بخرم',
+    searchSeed: 'هدیه مادر',
+    steps: [
+      { id: 'occasion', question: 'مناسبت چیه؟', chips: ['تولد', 'روز مادر', 'بی‌مناسبت'] },
+      { id: 'budget', question: 'حدود بودجه‌ات چقدره؟', chips: ['تا ۱.۵ میلیون', '۱.۵ تا ۳ میلیون', 'بالاتر از ۳ میلیون'] },
+      { id: 'style', question: 'چه سبک هدیه‌ای می‌خوای؟', chips: ['احساسی', 'کاربردی', 'لوکس'] },
+      { id: 'delivery', question: 'زمان تحویل مهمه؟', chips: ['ارسال فوری', 'تا ۳ روز', 'مهم نیست'] },
+    ],
+    followUps: ['گزینه‌های اقتصادی‌تر', 'ترندهای امسال', 'کادوهای احساسی'],
+  },
+  {
+    id: 'gift_friend',
+    chip: 'هدیه تولد دوست',
+    title: 'سناریو: هدیه تولد برای دوست',
+    triggerPatterns: ['دوست', 'تولد دوست', 'کادوی دوست'],
+    seedPrompt: 'برای تولد دوستم دنبال هدیه‌ام',
+    searchSeed: 'هدیه تولد دوست',
+    steps: [
+      { id: 'gender', question: 'هدیه برای دوست خانم یا آقاست؟', chips: ['خانم', 'آقا', 'فرقی نداره'] },
+      { id: 'budget', question: 'بودجه مدنظرت چقدره؟', chips: ['تا ۱ میلیون', '۱ تا ۲.۵ میلیون', 'بالاتر'] },
+      { id: 'tone', question: 'حس هدیه چی باشه؟', chips: ['فان', 'خاص', 'کاربردی'] },
+      { id: 'delivery', question: 'تحویل سریع می‌خوای؟', chips: ['بله', 'خیر'] },
+    ],
+    followUps: ['هدیه‌های خاص‌تر', 'بسته‌بندی کادویی', 'گزینه‌های زیر ۱ میلیون'],
+  },
+  {
+    id: 'home_relax',
+    chip: 'آرامش خونه',
+    title: 'سناریو: خرید برای آرامش خانه',
+    triggerPatterns: ['آرامش', 'خونه', 'ریلکس'],
+    seedPrompt: 'برای آرامش خونه چی بخرم؟',
+    searchSeed: 'آرامش خانه',
+    steps: [
+      { id: 'target', question: 'بیشتر برای چی می‌خوای؟', chips: ['بدن و سلامتی', 'دکور', 'سرگرمی'] },
+      { id: 'budget', question: 'بودجه حدودی؟', chips: ['اقتصادی', 'متوسط', 'پریمیوم'] },
+      { id: 'usage', question: 'استفاده روزانه یا گاهی؟', chips: ['روزانه', 'گاهی'] },
+      { id: 'delivery', question: 'ارسال فوری نیاز داری؟', chips: ['بله', 'نه'] },
+    ],
+    followUps: ['گزینه‌های کم‌هزینه', 'محصولات پرفروش این دسته', 'مقایسه کاربردی'],
+  },
+  {
+    id: 'formal_style',
+    chip: 'استایل مهمونی رسمی',
+    title: 'سناریو: استایل مهمانی رسمی',
+    triggerPatterns: ['مهمونی رسمی', 'استایل رسمی', 'لباس رسمی'],
+    seedPrompt: 'برای مهمونی رسمی چی بپوشم؟',
+    searchSeed: 'استایل رسمی',
+    steps: [
+      { id: 'event', question: 'نوع مهمونی چیه؟', chips: ['نامزدی', 'عروسی', 'جلسه رسمی'] },
+      { id: 'palette', question: 'رنگ مورد علاقه؟', chips: ['خنثی', 'گرم', 'سرد'] },
+      { id: 'budget', question: 'بودجه‌ات چقدره؟', chips: ['تا ۲ میلیون', '۲ تا ۵ میلیون', 'بیشتر'] },
+      { id: 'priority', question: 'اولویتت چیه؟', chips: ['شیک بودن', 'راحتی', 'ترکیب هر دو'] },
+    ],
+    followUps: ['استایل مینیمال رسمی', 'اکسسوری مناسب', 'ترند رسمی امسال'],
+  },
+];
 
 const INTENT_PATTERNS: Record<Intent, string[]> = {
   trend: ['ترند', 'trend', 'جدید', 'امسال', 'popular'],
@@ -63,15 +135,18 @@ const REEL_MAP_POINTS: Record<string, MapPoint> = {
   v21: { x: 26, y: 64, city: 'tehran' },
 };
 
-const CONSULTATION_TRIGGER_PATTERNS = ['هدیه', 'برای مادرم', 'برای مامانم', 'چی بخرم', 'مشاوره', 'recommend', 'gift'];
-const OCCASION_CHOICES = ['تولد', 'سالگرد', 'بدون مناسبت'];
-const BUDGET_CHOICES = ['اقتصادی', 'متوسط', 'پریمیوم'];
-const STYLE_CHOICES = ['کاربردی', 'احساسی', 'خاص و لوکس'];
-
 const isConsultationIntent = (value: string) => {
   const q = value.trim().toLowerCase();
   if (!q) return false;
-  return CONSULTATION_TRIGGER_PATTERNS.some((pattern) => q.includes(pattern));
+  return ADVISOR_SCENARIOS.some((scenario) => scenario.triggerPatterns.some((pattern) => q.includes(pattern)));
+};
+
+const matchAdvisorScenario = (value: string) => {
+  const q = value.trim().toLowerCase();
+  return (
+    ADVISOR_SCENARIOS.find((scenario) => scenario.triggerPatterns.some((pattern) => q.includes(pattern))) ??
+    ADVISOR_SCENARIOS[0]
+  );
 };
 
 const normalize = (value: string) =>
@@ -191,15 +266,12 @@ export default function Discover() {
   const [locationDenied, setLocationDenied] = useState(false);
   const [mapViewport, setMapViewport] = useState<MapViewport>({ cx: 50, cy: 52, zoom: 1 });
   const [advisorActive, setAdvisorActive] = useState(false);
-  const [advisorStep, setAdvisorStep] = useState<AdvisorStep>('recipient');
+  const [advisorFullscreen, setAdvisorFullscreen] = useState(false);
+  const [advisorStepIndex, setAdvisorStepIndex] = useState(0);
   const [advisorCollapsed, setAdvisorCollapsed] = useState(false);
   const [advisorMessages, setAdvisorMessages] = useState<AdvisorMessage[]>([]);
-  const [advisorAnswers, setAdvisorAnswers] = useState<Record<'recipient' | 'occasion' | 'budget' | 'style', string>>({
-    recipient: '',
-    occasion: '',
-    budget: '',
-    style: '',
-  });
+  const [advisorScenarioId, setAdvisorScenarioId] = useState(ADVISOR_SCENARIOS[0].id);
+  const [advisorAnswers, setAdvisorAnswers] = useState<string[]>([]);
 
   const gridTileRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -209,6 +281,9 @@ export default function Discover() {
   const mapDragRef = useRef<{ startX: number; startY: number; startCx: number; startCy: number } | null>(null);
   const warmIntentTimeoutRef = useRef<number | null>(null);
   const [nearViewportIds, setNearViewportIds] = useState<Record<string, true>>({});
+  const [primedVideoIds, setPrimedVideoIds] = useState<Record<string, true>>({});
+  const scrollDirectionRef = useRef<'down' | 'up'>('down');
+  const lastWindowScrollYRef = useRef(0);
 
   const rankedVideos = useMemo(
     () => rankBySemanticIntent(mockVideos, activeQuery).filter((video) => !failedMediaIds[video.id]),
@@ -306,15 +381,34 @@ export default function Discover() {
   useEffect(() => {
     const ordered = rankedVideos.filter((video) => nearViewportIds[video.id]);
     const warmCount = getWarmBudget().discoverWarmupCount;
-    ordered.slice(0, warmCount).forEach((video) => {
+    const source = scrollDirectionRef.current === 'down' ? ordered : [...ordered].reverse();
+    source.slice(0, warmCount).forEach((video) => {
       warmImage(video.thumbnail);
       warmVideoMetadata(video.videoUrl);
+      setPrimedVideoIds((prev) => (prev[video.id] ? prev : { ...prev, [video.id]: true }));
     });
   }, [nearViewportIds, rankedVideos]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const current = window.scrollY;
+      scrollDirectionRef.current = current >= lastWindowScrollYRef.current ? 'down' : 'up';
+      lastWindowScrollYRef.current = current;
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const openReelInFeed = (videoId: string) => {
     navigate(`/?reel=${encodeURIComponent(videoId)}`);
   };
+
+  const activeAdvisorScenario = useMemo(
+    () => ADVISOR_SCENARIOS.find((scenario) => scenario.id === advisorScenarioId) ?? ADVISOR_SCENARIOS[0],
+    [advisorScenarioId]
+  );
+  const advisorCompleted = advisorStepIndex >= activeAdvisorScenario.steps.length;
 
   const runQuery = useCallback((nextQuery: string) => {
     if (nextQuery === 'Nearby') {
@@ -325,39 +419,46 @@ export default function Discover() {
     setQueryInput(nextQuery);
     setActiveQuery(nextQuery);
     setVisibleCount(18);
-    setAdvisorActive(false);
-    setAdvisorStep('recipient');
-    setAdvisorMessages([]);
   }, []);
 
   const pushAdvisorMessage = useCallback((role: AdvisorMessage['role'], text: string) => {
     setAdvisorMessages((prev) => [...prev, { id: `${role}-${Date.now()}-${Math.random()}`, role, text }]);
   }, []);
 
-  const startAdvisor = useCallback(
-    (seedQuestion: string) => {
-      setAdvisorActive(true);
-      setAdvisorStep('recipient');
-      setAdvisorCollapsed(false);
-      setAdvisorAnswers({ recipient: '', occasion: '', budget: '', style: '' });
-      setAdvisorMessages([
-        { id: 'a-1', role: 'assistant', text: 'عالیه، با هم سریع بهترین گزینه رو پیدا می‌کنیم.' },
-        { id: 'u-seed', role: 'user', text: seedQuestion },
-        { id: 'a-2', role: 'assistant', text: 'این هدیه برای چه کسیه؟ (مثلا مادر، دوست، همکار)' },
-      ]);
-    },
-    []
-  );
+  const closeAdvisor = useCallback(() => {
+    setAdvisorActive(false);
+    setAdvisorFullscreen(false);
+    setAdvisorCollapsed(false);
+    setAdvisorStepIndex(0);
+    setAdvisorAnswers([]);
+    setAdvisorMessages([]);
+  }, []);
+
+  const startAdvisor = useCallback((seedQuestion: string, scenarioId?: string) => {
+    const scenario =
+      ADVISOR_SCENARIOS.find((item) => item.id === (scenarioId ?? '')) ??
+      matchAdvisorScenario(seedQuestion);
+    setAdvisorScenarioId(scenario.id);
+    setAdvisorActive(true);
+    setAdvisorFullscreen(false);
+    setAdvisorStepIndex(0);
+    setAdvisorCollapsed(false);
+    setAdvisorAnswers([]);
+    setAdvisorMessages([
+      { id: 'a-1', role: 'assistant', text: `${scenario.title} فعال شد.` },
+      { id: 'u-seed', role: 'user', text: seedQuestion || scenario.seedPrompt },
+      { id: 'a-2', role: 'assistant', text: scenario.steps[0]?.question ?? 'چه کمکی می‌خوای؟' },
+    ]);
+  }, []);
 
   const completeAdvisor = useCallback(
-    (answers: Record<'recipient' | 'occasion' | 'budget' | 'style', string>) => {
-      const composedQuery = `${answers.recipient} ${answers.occasion} ${answers.budget} ${answers.style}`.trim();
-      pushAdvisorMessage('assistant', 'پیشنهادها آماده شد. اکسپلور بر اساس جواب‌هات بازچینی شد.');
-      setQueryInput(composedQuery);
+    (scenario: AdvisorScenario, answers: string[]) => {
+      const composedQuery = [scenario.searchSeed, ...answers].join(' ').trim();
+      pushAdvisorMessage('assistant', 'پیشنهادها آماده شد و اکسپلور دقیق‌تر شد. اگر خواستی می‌تونیم دوباره refine کنیم.');
+      setQueryInput('');
       setActiveQuery(composedQuery);
       setVisibleCount(18);
-      setAdvisorActive(false);
-      setAdvisorStep('done');
+      setAdvisorStepIndex(scenario.steps.length);
     },
     [pushAdvisorMessage]
   );
@@ -369,38 +470,35 @@ export default function Discover() {
       if (!answer) return;
 
       pushAdvisorMessage('user', answer);
-
-      if (advisorStep === 'recipient') {
-        const next = { ...advisorAnswers, recipient: answer };
-        setAdvisorAnswers(next);
-        setAdvisorStep('occasion');
-        pushAdvisorMessage('assistant', 'مناسبت خرید چیه؟');
+      const scenario = activeAdvisorScenario;
+      if (advisorCompleted) {
+        runQuery(answer);
+        pushAdvisorMessage('assistant', 'اکسپلور با ورودی جدیدت دوباره تنظیم شد.');
         return;
       }
 
-      if (advisorStep === 'occasion') {
-        const next = { ...advisorAnswers, occasion: answer };
-        setAdvisorAnswers(next);
-        setAdvisorStep('budget');
-        pushAdvisorMessage('assistant', 'بازه بودجه مدنظرت چیه؟');
+      const nextAnswers = [...advisorAnswers, answer];
+      const nextStepIndex = advisorStepIndex + 1;
+      setAdvisorAnswers(nextAnswers);
+      setAdvisorStepIndex(nextStepIndex);
+
+      if (nextStepIndex >= scenario.steps.length) {
+        completeAdvisor(scenario, nextAnswers);
         return;
       }
 
-      if (advisorStep === 'budget') {
-        const next = { ...advisorAnswers, budget: answer };
-        setAdvisorAnswers(next);
-        setAdvisorStep('style');
-        pushAdvisorMessage('assistant', 'سبک هدیه رو ترجیح میدی کاربردی باشه یا احساسی/خاص؟');
-        return;
-      }
-
-      if (advisorStep === 'style') {
-        const next = { ...advisorAnswers, style: answer };
-        setAdvisorAnswers(next);
-        completeAdvisor(next);
-      }
+      pushAdvisorMessage('assistant', scenario.steps[nextStepIndex].question);
     },
-    [advisorActive, advisorAnswers, advisorStep, completeAdvisor, pushAdvisorMessage]
+    [
+      activeAdvisorScenario,
+      advisorActive,
+      advisorAnswers,
+      advisorCompleted,
+      advisorStepIndex,
+      completeAdvisor,
+      pushAdvisorMessage,
+      runQuery,
+    ]
   );
 
   const handleSearchSubmit = (e: FormEvent) => {
@@ -415,7 +513,8 @@ export default function Discover() {
     }
 
     if (isConsultationIntent(nextQuery)) {
-      startAdvisor(nextQuery);
+      const matched = matchAdvisorScenario(nextQuery);
+      startAdvisor(nextQuery, matched.id);
       setQueryInput('');
       return;
     }
@@ -576,13 +675,21 @@ export default function Discover() {
   };
 
   const mapTransform = `translate(${(50 - mapViewport.cx) * 1.15}%, ${(50 - mapViewport.cy) * 1.15}%) scale(${mapViewport.zoom})`;
+  const advisorScenarioChips = useMemo(() => ADVISOR_SCENARIOS.map((item) => item.chip), []);
   const contextualAdvisorChips = useMemo(() => {
     if (!advisorActive) return [];
-    if (advisorStep === 'occasion') return OCCASION_CHOICES;
-    if (advisorStep === 'budget') return BUDGET_CHOICES;
-    if (advisorStep === 'style') return STYLE_CHOICES;
-    return ['بودجه کم', 'ترندهای امسال', 'استایل رسمی'];
-  }, [advisorActive, advisorStep]);
+    if (advisorCompleted) return activeAdvisorScenario.followUps;
+    return activeAdvisorScenario.steps[advisorStepIndex]?.chips ?? [];
+  }, [activeAdvisorScenario, advisorActive, advisorCompleted, advisorStepIndex]);
+
+  useEffect(() => {
+    if (!advisorFullscreen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [advisorFullscreen]);
 
   return (
     <>
@@ -594,9 +701,18 @@ export default function Discover() {
           quickChips={SUGGESTION_CHIPS}
           onQuickChipPress={runQuery}
           starterChip={JOURNEY_STARTER_CHIP}
-          onStarterChipPress={() => startAdvisor(JOURNEY_STARTER_CHIP)}
+          onStarterChipPress={() => startAdvisor(JOURNEY_STARTER_CHIP, 'gift_mother')}
+          scenarioChips={advisorScenarioChips}
+          onScenarioChipPress={(value) => {
+            const scenario = ADVISOR_SCENARIOS.find((item) => item.chip === value);
+            if (!scenario) return runQuery(value);
+            startAdvisor(scenario.seedPrompt, scenario.id);
+          }}
           advisorActive={advisorActive}
           advisorCollapsed={advisorCollapsed}
+          advisorFullscreen={advisorFullscreen}
+          onToggleAdvisorFullscreen={() => setAdvisorFullscreen((prev) => !prev)}
+          onCloseAdvisor={closeAdvisor}
           onToggleAdvisorCollapse={() => setAdvisorCollapsed((prev) => !prev)}
           advisorMessages={advisorMessages}
           contextualChips={contextualAdvisorChips}
@@ -625,6 +741,7 @@ export default function Discover() {
                     // Intent-based warmup: pre-warm video metadata only when interaction is likely.
                     warmIntentTimeoutRef.current = window.setTimeout(() => {
                       warmVideoMetadata(video.videoUrl);
+                      setPrimedVideoIds((prev) => (prev[video.id] ? prev : { ...prev, [video.id]: true }));
                     }, 140);
                   }}
                   onMouseLeave={() => {
@@ -635,15 +752,25 @@ export default function Discover() {
                   }}
                   className={`relative overflow-hidden rounded-[10px] ${span}`}
                 >
-                  <video
-                    src={video.videoUrl}
-                    poster={firstFramePosterById[video.id] || undefined}
-                    muted
-                    playsInline
-                    preload={nearViewportIds[video.id] ? 'metadata' : 'none'}
-                    className="w-full h-full object-cover"
-                    onError={() => markMediaFailed(video.id)}
-                  />
+                  {nearViewportIds[video.id] || primedVideoIds[video.id] ? (
+                    <video
+                      src={video.videoUrl}
+                      poster={firstFramePosterById[video.id] || undefined}
+                      muted
+                      playsInline
+                      preload={nearViewportIds[video.id] ? 'metadata' : 'none'}
+                      className="w-full h-full object-cover"
+                      onError={() => markMediaFailed(video.id)}
+                    />
+                  ) : (
+                    <img
+                      src={firstFramePosterById[video.id] || video.thumbnail}
+                      alt={video.product?.name ?? video.username}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={() => markMediaFailed(video.id)}
+                    />
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                 </button>
               ))}

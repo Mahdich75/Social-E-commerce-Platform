@@ -69,6 +69,9 @@ export default function Home() {
   const verticalScrollRafRef = useRef<number | null>(null);
   const horizontalScrollRafRef = useRef<Record<number, number | null>>({});
   const warmQueueRef = useRef<string[]>([]);
+  const lastScrollTopRef = useRef(0);
+  const lastScrollTsRef = useRef(0);
+  const scrollVelocityRef = useRef(0);
 
   const { toggleLike, isLiked } = useReelStore();
   const startPurchaseChat = useCommerceChatStore((state) => state.startPurchaseChat);
@@ -347,6 +350,13 @@ export default function Home() {
       }
 
       verticalScrollRafRef.current = requestAnimationFrame(() => {
+        const now = performance.now();
+        const deltaY = Math.abs(target.scrollTop - lastScrollTopRef.current);
+        const deltaT = Math.max(16, now - lastScrollTsRef.current);
+        scrollVelocityRef.current = deltaY / deltaT;
+        lastScrollTopRef.current = target.scrollTop;
+        lastScrollTsRef.current = now;
+
         const snapped = Math.round(target.scrollTop / viewportHeight);
         const nextIndex = Math.max(0, Math.min(productRows.length - 1, snapped));
         if (nextIndex !== activeIndex) {
@@ -416,9 +426,12 @@ export default function Home() {
     const nextReel = activeRowRef.reels[currentRowPos + 1];
     const prevReel = activeRowRef.reels[currentRowPos - 1];
 
+    const velocity = scrollVelocityRef.current;
+    const quickScroll = velocity > 1.1;
     if (activeReel) toWarm.add(`${activeIndex}-${currentRowPos}`);
     if (nextReel) toWarm.add(`${activeIndex}-${currentRowPos + 1}`);
-    if (prevReel) toWarm.add(`${activeIndex}-${currentRowPos - 1}`);
+    // Keep previous warm only when scrolling is not too fast.
+    if (!quickScroll && prevReel) toWarm.add(`${activeIndex}-${currentRowPos - 1}`);
 
     const nextRow = productRows[activeIndex + 1];
     const prevRow = productRows[activeIndex - 1];
@@ -428,7 +441,8 @@ export default function Home() {
     setLoadedVideoKeys((prev) => {
       const next = { ...prev };
       const queue = warmQueueRef.current.slice();
-      const budget = getWarmBudget().feedCacheSize;
+      const { feedCacheSize } = getWarmBudget();
+      const budget = quickScroll ? Math.max(3, feedCacheSize - 3) : feedCacheSize;
 
       toWarm.forEach((key) => {
         if (!next[key]) next[key] = true;
@@ -609,7 +623,13 @@ export default function Home() {
                           muted={isMuted}
                           loop
                           playsInline
-                          preload={isNearViewport(rowIndex, reelIndex) ? 'metadata' : 'none'}
+                          preload={
+                            rowIndex === activeIndex && reelIndex === rowHorizontalPos
+                              ? 'auto'
+                              : isNearViewport(rowIndex, reelIndex)
+                                ? 'metadata'
+                                : 'none'
+                          }
                           onLoadedMetadata={(e) => {
                             e.currentTarget.volume = globalVolume;
                           }}
