@@ -42,6 +42,8 @@ const VIEWPORT_CACHE_KEY = 'discover_map_viewport_cache_v1';
 const LOCATION_DENIED_KEY = 'discover_map_location_denied_v1';
 const NEARBY_SAMPLE_MAX = 9;
 const VIEWPORT_DEBOUNCE_MS = 650;
+const FIRST_FRAME_CACHE_KEY = 'discover_first_frame_cache_v1';
+const MAX_FIRST_FRAME_CAPTURE = 24;
 
 const REEL_MAP_POINTS: Record<string, MapPoint> = {
   v5: { x: 47, y: 52, city: 'tehran' },
@@ -191,6 +193,7 @@ export default function Discover() {
   const [advisorStep, setAdvisorStep] = useState<AdvisorStep>('recipient');
   const [advisorCollapsed, setAdvisorCollapsed] = useState(false);
   const [advisorMessages, setAdvisorMessages] = useState<AdvisorMessage[]>([]);
+  const [firstFrameThumbs, setFirstFrameThumbs] = useState<Record<string, string>>({});
   const [advisorAnswers, setAdvisorAnswers] = useState<Record<'recipient' | 'occasion' | 'budget' | 'style', string>>({
     recipient: '',
     occasion: '',
@@ -254,6 +257,105 @@ export default function Discover() {
 
     return () => observer.disconnect();
   }, [tiles]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FIRST_FRAME_CACHE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Record<string, string>;
+      setFirstFrameThumbs(parsed);
+    } catch {
+      // ignore parse/cache errors
+    }
+  }, []);
+
+  useEffect(() => {
+    const localVideos = rankedVideos.filter((video) => video.id.startsWith('ldr-'));
+    if (localVideos.length === 0) return;
+
+    const pending = localVideos.filter((video) => !firstFrameThumbs[video.id]).slice(0, MAX_FIRST_FRAME_CAPTURE);
+    if (pending.length === 0) return;
+
+    let cancelled = false;
+
+    const captureFirstFrame = (videoUrl: string) =>
+      new Promise<string | null>((resolve) => {
+        const video = document.createElement('video');
+        video.src = videoUrl;
+        video.preload = 'metadata';
+        video.muted = true;
+        video.playsInline = true;
+
+        const clean = () => {
+          video.onloadeddata = null;
+          video.onseeked = null;
+          video.onerror = null;
+        };
+
+        video.onerror = () => {
+          clean();
+          resolve(null);
+        };
+
+        video.onloadeddata = () => {
+          const goCapture = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = 240;
+              canvas.height = 426;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) {
+                clean();
+                resolve(null);
+                return;
+              }
+
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const url = canvas.toDataURL('image/jpeg', 0.72);
+              clean();
+              resolve(url);
+            } catch {
+              clean();
+              resolve(null);
+            }
+          };
+
+          if (video.duration && video.duration > 0.05) {
+            video.onseeked = goCapture;
+            video.currentTime = 0.05;
+          } else {
+            goCapture();
+          }
+        };
+      });
+
+    const run = async () => {
+      const fresh: Record<string, string> = {};
+      for (const video of pending) {
+        if (cancelled) break;
+        const captured = await captureFirstFrame(video.videoUrl);
+        if (!captured) continue;
+        fresh[video.id] = captured;
+      }
+
+      if (cancelled || Object.keys(fresh).length === 0) return;
+
+      setFirstFrameThumbs((prev) => {
+        const next = { ...prev, ...fresh };
+        try {
+          localStorage.setItem(FIRST_FRAME_CACHE_KEY, JSON.stringify(next));
+        } catch {
+          // ignore write errors (quota/private mode)
+        }
+        return next;
+      });
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [firstFrameThumbs, rankedVideos]);
 
   useEffect(() => {
     if (!isNearbyMapOpen) return;
@@ -583,7 +685,7 @@ export default function Discover() {
                   onClick={() => openReelInFeed(video.id)}
                   className={`relative overflow-hidden rounded-[10px] ${span}`}
                 >
-                  {shape === 'portrait' ? (
+                  {shape === 'portrait' && !video.id.startsWith('ldr-') ? (
                     <video
                       ref={(el) => {
                         gridVideoRefs.current[video.id] = el;
@@ -599,7 +701,12 @@ export default function Discover() {
                       onMouseLeave={(e) => e.currentTarget.pause()}
                     />
                   ) : (
-                    <img src={video.thumbnail} alt={video.product?.name ?? video.username} className="w-full h-full object-cover" loading="lazy" />
+                    <img
+                      src={firstFrameThumbs[video.id] ?? video.thumbnail}
+                      alt={video.product?.name ?? video.username}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                 </button>

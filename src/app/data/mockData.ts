@@ -1,4 +1,5 @@
 ﻿import { Product, VideoFeed } from '../types';
+import { localStaticProducts, localStaticReelCommentsFa, localStaticVideoSeeds } from './localReelsStatic';
 
 const staticAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 
@@ -308,7 +309,7 @@ const baseMockProducts: Omit<Product, 'creatorId' | 'creatorUsername' | 'creator
   },
 ];
 
-export const mockProducts: Product[] = baseMockProducts.map((product) => {
+const mappedBaseProducts: Product[] = baseMockProducts.map((product) => {
   const creatorId = creatorByProductId[product.id] ?? creatorByCategory[product.category] ?? 'creator_style_guru';
   const creator = creatorById[creatorId] ?? creatorById.creator_style_guru;
   return {
@@ -318,6 +319,15 @@ export const mockProducts: Product[] = baseMockProducts.map((product) => {
     creatorAvatar: creator.avatar,
   };
 });
+
+export const mockProducts: Product[] = [
+  ...mappedBaseProducts,
+  ...localStaticProducts.map((product) => ({
+    ...product,
+    image: product.image.startsWith('http') ? product.image : staticAsset(product.image),
+    creatorAvatar: staticAsset(product.creatorAvatar),
+  })),
+];
 
 const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
   {
@@ -651,7 +661,25 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
   },
 ];
 
-const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [...manualBaseVideos];
+const productById = Object.fromEntries(mockProducts.map((product) => [product.id, product])) as Record<string, Product>;
+
+const localStaticVideos: Omit<VideoFeed, 'similarReels'>[] = localStaticVideoSeeds
+  .map((video) => {
+    const product = productById[video.productId];
+    if (!product) return null;
+
+    return {
+      ...video,
+      videoUrl: staticAsset(video.videoUrl),
+      thumbnail: video.thumbnail.startsWith('http') ? video.thumbnail : staticAsset(video.thumbnail),
+      userAvatar: staticAsset(video.userAvatar),
+      product,
+      hashtags: (video.hashtags ?? []).map((tag) => (tag.startsWith('#') ? tag : `#${tag}`)),
+    };
+  })
+  .filter((video): video is Omit<VideoFeed, 'similarReels'> => Boolean(video));
+
+const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [...manualBaseVideos, ...localStaticVideos];
 
 export const mockVideos: VideoFeed[] = baseVideos.map((video) => ({
   ...video,
@@ -703,7 +731,7 @@ mockVideos.forEach((video) => {
   video.similarReels = relatedPool.slice(0, 6);
 });
 
-export const reelCommentsFa: Record<string, string[]> = {
+const baseReelCommentsFa: Record<string, string[]> = {
   v1: ['خیلی قشنگه 😍', 'کارِ دست؟ فوق‌العاده‌ست 👏'],
   v2: ['نورش خیلی تمیزه، برای کار حرفه‌ای عالیه.', 'گارانتی رسمی هم داره؟'],
   v3: ['این پازل فکری خیلی جذابه 🧩', 'برای جمع خانوادگی واقعاً انتخاب خوبیه.'],
@@ -726,6 +754,12 @@ export const reelCommentsFa: Record<string, string[]> = {
   v20: ['این دوربین پرنده خیلی خوش‌دسته 📸', 'کیفیت تصویرش برای ولاگ عالیه، موجود دارید؟'],
   '15': ['ویدئوی معرفی خیلی حس خوب داشت 🌿', 'برای سفارش طرح کافه موجودی دارید؟'],
 };
+
+export const reelCommentsFa: Record<string, string[]> = {
+  ...baseReelCommentsFa,
+  ...localStaticReelCommentsFa,
+};
+
 
 
 

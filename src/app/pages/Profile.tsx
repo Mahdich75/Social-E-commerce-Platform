@@ -258,7 +258,7 @@ export default function Profile() {
 
           <TabsContent value="reels" className="mt-0 p-0">
             <div className="grid grid-cols-3 gap-1 p-1">
-              {mockVideos.map((video) => (
+              {mockVideos.slice(0, 11).map((video) => (
                 <div key={video.id} className="aspect-[9/16] bg-zinc-100 relative overflow-hidden">
                   <img src={video.thumbnail} alt="Video" className="w-full h-full object-cover" />
                 </div>
