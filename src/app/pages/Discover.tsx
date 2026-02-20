@@ -22,7 +22,8 @@ type MapViewport = {
   zoom: number;
 };
 
-type MapPoint = { x: number; y: number; city: string };
+type MapPoint = { x: number; y: number; lat: number; lng: number; city: string };
+type MapMarker = { x: number; y: number; count: number; reelIds: string[] };
 type AdvisorScenarioStep = { id: string; question: string; chips: string[] };
 type AdvisorScenario = {
   id: string;
@@ -116,23 +117,35 @@ const VIEWPORT_CACHE_KEY = 'discover_map_viewport_cache_v1';
 const LOCATION_DENIED_KEY = 'discover_map_location_denied_v1';
 const NEARBY_SAMPLE_MAX = 9;
 const VIEWPORT_DEBOUNCE_MS = 650;
+const TEHRAN_BOUNDS = {
+  minLat: 35.5,
+  maxLat: 35.95,
+  minLng: 51.1,
+  maxLng: 51.75,
+};
+
+const toGeoFromGrid = (x: number, y: number) => {
+  const lng = TEHRAN_BOUNDS.minLng + (x / 100) * (TEHRAN_BOUNDS.maxLng - TEHRAN_BOUNDS.minLng);
+  const lat = TEHRAN_BOUNDS.maxLat - (y / 100) * (TEHRAN_BOUNDS.maxLat - TEHRAN_BOUNDS.minLat);
+  return { lat, lng };
+};
 
 const REEL_MAP_POINTS: Record<string, MapPoint> = {
-  v5: { x: 47, y: 52, city: 'tehran' },
-  v7: { x: 44, y: 57, city: 'tehran' },
-  v8: { x: 55, y: 48, city: 'tehran' },
-  v9: { x: 50, y: 44, city: 'tehran' },
-  v10: { x: 42, y: 61, city: 'tehran' },
-  v11: { x: 58, y: 63, city: 'tehran' },
-  v12: { x: 69, y: 46, city: 'tehran' },
-  v13: { x: 73, y: 52, city: 'tehran' },
-  v14: { x: 66, y: 58, city: 'tehran' },
-  v16: { x: 31, y: 54, city: 'tehran' },
-  v17: { x: 28, y: 49, city: 'tehran' },
-  v18: { x: 36, y: 58, city: 'tehran' },
-  v19: { x: 33, y: 45, city: 'tehran' },
-  v20: { x: 49, y: 68, city: 'tehran' },
-  v21: { x: 26, y: 64, city: 'tehran' },
+  v5: { x: 47, y: 52, city: 'tehran', ...toGeoFromGrid(47, 52) },
+  v7: { x: 44, y: 57, city: 'tehran', ...toGeoFromGrid(44, 57) },
+  v8: { x: 55, y: 48, city: 'tehran', ...toGeoFromGrid(55, 48) },
+  v9: { x: 50, y: 44, city: 'tehran', ...toGeoFromGrid(50, 44) },
+  v10: { x: 42, y: 61, city: 'tehran', ...toGeoFromGrid(42, 61) },
+  v11: { x: 58, y: 63, city: 'tehran', ...toGeoFromGrid(58, 63) },
+  v12: { x: 69, y: 46, city: 'tehran', ...toGeoFromGrid(69, 46) },
+  v13: { x: 73, y: 52, city: 'tehran', ...toGeoFromGrid(73, 52) },
+  v14: { x: 66, y: 58, city: 'tehran', ...toGeoFromGrid(66, 58) },
+  v16: { x: 31, y: 54, city: 'tehran', ...toGeoFromGrid(31, 54) },
+  v17: { x: 28, y: 49, city: 'tehran', ...toGeoFromGrid(28, 49) },
+  v18: { x: 36, y: 58, city: 'tehran', ...toGeoFromGrid(36, 58) },
+  v19: { x: 33, y: 45, city: 'tehran', ...toGeoFromGrid(33, 45) },
+  v20: { x: 49, y: 68, city: 'tehran', ...toGeoFromGrid(49, 68) },
+  v21: { x: 26, y: 64, city: 'tehran', ...toGeoFromGrid(26, 64) },
 };
 
 const isConsultationIntent = (value: string) => {
@@ -230,22 +243,54 @@ const viewportCacheKey = (viewport: MapViewport) => {
   return rounded.join('_');
 };
 
-const pickNearbyForViewport = (viewport: MapViewport, source: VideoFeed[]) => {
+const getVisibleMapPoints = (viewport: MapViewport) => {
   const b = viewportToBounds(viewport);
+  return Object.entries(REEL_MAP_POINTS)
+    .filter(([, point]) => point.x >= b.minX && point.x <= b.maxX && point.y >= b.minY && point.y <= b.maxY)
+    .map(([reelId, point]) => ({ reelId, point }));
+};
+
+const buildMapMarkers = (viewport: MapViewport): MapMarker[] => {
+  const visible = getVisibleMapPoints(viewport);
+  if (visible.length === 0) return [];
+
+  // Zoom-aware cell clustering keeps marker density low when zoomed out
+  // while naturally separating markers as users zoom in.
+  const clusterCell = viewport.zoom <= 1.15 ? 12 : viewport.zoom <= 1.7 ? 8 : 5;
+  const clusters = new Map<string, { sumX: number; sumY: number; count: number; reelIds: string[] }>();
+
+  visible.forEach(({ reelId, point }) => {
+    const cellX = Math.floor(point.x / clusterCell);
+    const cellY = Math.floor(point.y / clusterCell);
+    const key = `${cellX}:${cellY}`;
+    const cluster = clusters.get(key);
+    if (!cluster) {
+      clusters.set(key, { sumX: point.x, sumY: point.y, count: 1, reelIds: [reelId] });
+      return;
+    }
+    cluster.sumX += point.x;
+    cluster.sumY += point.y;
+    cluster.count += 1;
+    cluster.reelIds.push(reelId);
+  });
+
+  return Array.from(clusters.values()).map((cluster) => ({
+    x: cluster.sumX / cluster.count,
+    y: cluster.sumY / cluster.count,
+    count: cluster.count,
+    reelIds: cluster.reelIds,
+  }));
+};
+
+const pickNearbyForViewport = (viewport: MapViewport, source: VideoFeed[]) => {
+  const visibleIds = new Set(getVisibleMapPoints(viewport).map((item) => item.reelId));
   return source
-    .filter((video) => {
-      const point = REEL_MAP_POINTS[video.id];
-      if (!point) return false;
-      return point.x >= b.minX && point.x <= b.maxX && point.y >= b.minY && point.y <= b.maxY;
-    })
+    .filter((video) => visibleIds.has(video.id))
     .slice(0, NEARBY_SAMPLE_MAX);
 };
 
 const toTehranGridCenter = (lat: number, lng: number): { cx: number; cy: number } | null => {
-  const minLat = 35.5;
-  const maxLat = 35.95;
-  const minLng = 51.1;
-  const maxLng = 51.75;
+  const { minLat, maxLat, minLng, maxLng } = TEHRAN_BOUNDS;
   if (lat < minLat || lat > maxLat || lng < minLng || lng > maxLng) return null;
 
   const x = ((lng - minLng) / (maxLng - minLng)) * 100;
@@ -262,6 +307,7 @@ export default function Discover() {
   const [isLoadingGrid, setIsLoadingGrid] = useState(false);
   const [isNearbyMapOpen, setIsNearbyMapOpen] = useState(false);
   const [nearbyReels, setNearbyReels] = useState<VideoFeed[]>([]);
+  const [isNearbyLoading, setIsNearbyLoading] = useState(false);
   const [nearbyInitialized, setNearbyInitialized] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
   const [mapViewport, setMapViewport] = useState<MapViewport>({ cx: 50, cy: 52, zoom: 1 });
@@ -531,12 +577,14 @@ export default function Discover() {
           .map((id) => mockVideos.find((video) => video.id === id))
           .filter((video): video is VideoFeed => Boolean(video));
         setNearbyReels(cached);
+        setIsNearbyLoading(false);
         return;
       }
 
       const sampled = pickNearbyForViewport(viewport, mockVideos);
       nearbyCacheRef.current[key] = sampled.map((video) => video.id);
       setNearbyReels(sampled);
+      setIsNearbyLoading(false);
 
       try {
         sessionStorage.setItem(VIEWPORT_CACHE_KEY, JSON.stringify(nearbyCacheRef.current));
@@ -552,13 +600,25 @@ export default function Discover() {
       if (viewportDebounceRef.current) {
         window.clearTimeout(viewportDebounceRef.current);
       }
+      setIsNearbyLoading(true);
 
+      // Debounced viewport sync prevents excessive recompute/API-like churn
+      // while keeping map -> reels updates responsive after movement settles.
       viewportDebounceRef.current = window.setTimeout(() => {
         applyViewportResult(nextViewport);
       }, VIEWPORT_DEBOUNCE_MS);
     },
     [applyViewportResult]
   );
+
+  useEffect(() => {
+    if (isNearbyMapOpen) return;
+    if (viewportDebounceRef.current) {
+      window.clearTimeout(viewportDebounceRef.current);
+    }
+    mapDragRef.current = null;
+    setIsNearbyLoading(false);
+  }, [isNearbyMapOpen]);
 
   useEffect(() => {
     return () => {
@@ -675,6 +735,7 @@ export default function Discover() {
   };
 
   const mapTransform = `translate(${(50 - mapViewport.cx) * 1.15}%, ${(50 - mapViewport.cy) * 1.15}%) scale(${mapViewport.zoom})`;
+  const mapMarkers = useMemo(() => buildMapMarkers(mapViewport), [mapViewport]);
   const advisorScenarioChips = useMemo(() => ADVISOR_SCENARIOS.map((item) => item.chip), []);
   const contextualAdvisorChips = useMemo(() => {
     if (!advisorActive) return [];
@@ -825,6 +886,25 @@ export default function Discover() {
                 }}
               />
               <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.3)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.3)_1px,transparent_1px)] bg-[size:36px_36px]" />
+              <div className="absolute inset-0 pointer-events-none">
+                {mapMarkers.map((marker, idx) => (
+                  <div
+                    key={`marker-${idx}`}
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70 bg-red-500 text-white shadow-sm ${
+                      marker.count > 1 ? 'h-[18px] min-w-[18px] px-1 text-[10px] font-semibold flex items-center justify-center' : 'w-3.5 h-3.5'
+                    }`}
+                    style={{ left: `${marker.x}%`, top: `${marker.y}%` }}
+                    aria-hidden
+                  >
+                    {marker.count > 1 ? marker.count : null}
+                  </div>
+                ))}
+              </div>
+              {isNearbyLoading && (
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                  <div className="h-8 px-3 rounded-full bg-black/55 text-white text-xs font-semibold">Updating nearby reels...</div>
+                </div>
+              )}
             </div>
 
             <div className="px-3 py-2 border-t border-zinc-200">
