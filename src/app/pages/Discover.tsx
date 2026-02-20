@@ -6,6 +6,7 @@ import { VideoFeed } from '../types';
 import { sanitizeCaptionText } from '../utils/sanitizeCaption';
 import { DiscoverSearchAssistant } from '../components/discover/DiscoverSearchAssistant';
 import { getWarmBudget, warmImage, warmVideoMetadata } from '../utils/mediaWarmCache';
+import { useFirstFramePosters } from '../utils/useFirstFramePosters';
 
 type Intent = 'trend' | 'minimal' | 'new_year' | 'formal' | 'color_match' | 'beauty' | 'comfort';
 
@@ -214,6 +215,12 @@ export default function Discover() {
     [activeQuery, failedMediaIds]
   );
   const tiles = useMemo(() => getTileConfig(rankedVideos.slice(0, visibleCount)), [rankedVideos, visibleCount]);
+  const firstFramePosterById = useFirstFramePosters(
+    rankedVideos.slice(0, visibleCount + 6).map((video) => ({
+      id: video.id,
+      videoUrl: video.videoUrl,
+    }))
+  );
 
   const markMediaFailed = useCallback((videoId: string) => {
     setFailedMediaIds((prev) => {
@@ -628,12 +635,13 @@ export default function Discover() {
                   }}
                   className={`relative overflow-hidden rounded-[10px] ${span}`}
                 >
-                  <img
-                    src={video.thumbnail}
-                    alt={video.product?.name ?? video.username}
+                  <video
+                    src={video.videoUrl}
+                    poster={firstFramePosterById[video.id] || undefined}
+                    muted
+                    playsInline
+                    preload={nearViewportIds[video.id] ? 'metadata' : 'none'}
                     className="w-full h-full object-cover"
-                    loading="lazy"
-                    // Discover grid intentionally stays poster-first (no autoplay) for smooth scroll.
                     onError={() => markMediaFailed(video.id)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
@@ -708,7 +716,7 @@ export default function Discover() {
                     >
                       <video
                         src={video.videoUrl}
-                        poster={video.thumbnail}
+                        poster={firstFramePosterById[video.id] || undefined}
                         muted
                         loop
                         playsInline

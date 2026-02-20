@@ -15,6 +15,7 @@ import { useCommerceChatStore } from '../store/useCommerceChatStore';
 import { sortByUsefulness } from '../utils/commentInsights';
 import { useFollowStore } from '../store/useFollowStore';
 import { getWarmBudget, warmImage, warmVideoMetadata } from '../utils/mediaWarmCache';
+import { useFirstFramePosters } from '../utils/useFirstFramePosters';
 
 interface FeedRow {
   rowId: string;
@@ -555,6 +556,10 @@ export default function Home() {
     return Object.fromEntries(entries) as Record<string, Array<{ username: string; avatar: string; text: string }>>;
   }, [baseReels]);
 
+  const firstFramePosterById = useFirstFramePosters(
+    baseReels.map((video) => ({ id: video.id, videoUrl: video.videoUrl }))
+  );
+
   return (
     <>
       <div className="relative w-full h-screen overflow-hidden bg-black">
@@ -598,7 +603,7 @@ export default function Home() {
                             videoRefs.current[`${rowIndex}-${reelIndex}`] = el;
                           }}
                           src={loadedVideoKeys[`${rowIndex}-${reelIndex}`] ? video.videoUrl : undefined}
-                          poster={video.thumbnail}
+                          poster={firstFramePosterById[video.id] || undefined}
                           className="absolute inset-0 w-full h-full object-cover"
                           autoPlay={rowIndex === activeIndex && reelIndex === rowHorizontalPos}
                           muted={isMuted}
