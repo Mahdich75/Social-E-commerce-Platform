@@ -14,6 +14,7 @@ import { formatPriceToman } from '../utils/price';
 import { useCommerceChatStore } from '../store/useCommerceChatStore';
 import { sortByUsefulness } from '../utils/commentInsights';
 import { useFollowStore } from '../store/useFollowStore';
+import { getWarmBudget, warmImage, warmVideoMetadata } from '../utils/mediaWarmCache';
 
 interface FeedRow {
   rowId: string;
@@ -58,6 +59,7 @@ export default function Home() {
   const [horizontalPositions, setHorizontalPositions] = useState<Record<number, number>>({});
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreenVideo, setIsFullscreenVideo] = useState(false);
+  const [loadedVideoKeys, setLoadedVideoKeys] = useState<Record<string, true>>({});
   const globalVolume = 0.9;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -65,6 +67,7 @@ export default function Home() {
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const verticalScrollRafRef = useRef<number | null>(null);
   const horizontalScrollRafRef = useRef<Record<number, number | null>>({});
+  const warmQueueRef = useRef<string[]>([]);
 
   const { toggleLike, isLiked } = useReelStore();
   const startPurchaseChat = useCommerceChatStore((state) => state.startPurchaseChat);
@@ -400,6 +403,64 @@ export default function Home() {
   }, [activeHorizontal, activeIndex, isMuted]);
 
   useEffect(() => {
+    if (!productRows.length) return;
+
+    // Keep only active reel + immediate neighbors warm; avoids full-feed media fetch.
+    const toWarm = new Set<string>();
+    const activeRowRef = productRows[activeIndex];
+    if (!activeRowRef) return;
+
+    const currentRowPos = horizontalPositions[activeIndex] ?? 0;
+    const activeReel = activeRowRef.reels[currentRowPos];
+    const nextReel = activeRowRef.reels[currentRowPos + 1];
+    const prevReel = activeRowRef.reels[currentRowPos - 1];
+
+    if (activeReel) toWarm.add(`${activeIndex}-${currentRowPos}`);
+    if (nextReel) toWarm.add(`${activeIndex}-${currentRowPos + 1}`);
+    if (prevReel) toWarm.add(`${activeIndex}-${currentRowPos - 1}`);
+
+    const nextRow = productRows[activeIndex + 1];
+    const prevRow = productRows[activeIndex - 1];
+    if (nextRow?.reels[0]) toWarm.add(`${activeIndex + 1}-0`);
+    if (prevRow?.reels[0]) toWarm.add(`${activeIndex - 1}-0`);
+
+    setLoadedVideoKeys((prev) => {
+      const next = { ...prev };
+      const queue = warmQueueRef.current.slice();
+      const budget = getWarmBudget().feedCacheSize;
+
+      toWarm.forEach((key) => {
+        if (!next[key]) next[key] = true;
+        const idx = queue.indexOf(key);
+        if (idx !== -1) queue.splice(idx, 1);
+        queue.push(key);
+      });
+
+      while (queue.length > budget) {
+        const removedKey = queue.shift();
+        if (!removedKey || toWarm.has(removedKey)) continue;
+        delete next[removedKey];
+        const video = videoRefs.current[removedKey];
+        if (video) {
+          // Explicitly release far-away buffers to reduce memory/network pressure.
+          video.pause();
+          video.removeAttribute('src');
+          video.load();
+        }
+      }
+
+      warmQueueRef.current = queue;
+      return next;
+    });
+
+    [activeReel, nextReel, prevReel].forEach((reel) => {
+      if (!reel) return;
+      warmImage(reel.thumbnail);
+      warmVideoMetadata(reel.videoUrl);
+    });
+  }, [activeHorizontal, activeIndex, horizontalPositions, productRows]);
+
+  useEffect(() => {
     if (!activeVideo?.id) return;
     setCommentsVideoId(activeVideo.id);
   }, [activeVideo?.id]);
@@ -536,7 +597,8 @@ export default function Home() {
                           ref={(el) => {
                             videoRefs.current[`${rowIndex}-${reelIndex}`] = el;
                           }}
-                          src={video.videoUrl}
+                          src={loadedVideoKeys[`${rowIndex}-${reelIndex}`] ? video.videoUrl : undefined}
+                          poster={video.thumbnail}
                           className="absolute inset-0 w-full h-full object-cover"
                           autoPlay={rowIndex === activeIndex && reelIndex === rowHorizontalPos}
                           muted={isMuted}

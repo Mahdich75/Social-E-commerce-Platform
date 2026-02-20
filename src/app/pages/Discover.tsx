@@ -5,6 +5,7 @@ import { mockVideos } from '../data/mockData';
 import { VideoFeed } from '../types';
 import { sanitizeCaptionText } from '../utils/sanitizeCaption';
 import { DiscoverSearchAssistant } from '../components/discover/DiscoverSearchAssistant';
+import { getWarmBudget, warmImage, warmVideoMetadata } from '../utils/mediaWarmCache';
 
 type Intent = 'trend' | 'minimal' | 'new_year' | 'formal' | 'color_match' | 'beauty' | 'comfort';
 
@@ -199,13 +200,14 @@ export default function Discover() {
     style: '',
   });
 
-  const gridVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
-  const nearbyVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const gridTileRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const checkedMediaIdsRef = useRef<Set<string>>(new Set());
   const viewportDebounceRef = useRef<number | null>(null);
   const nearbyCacheRef = useRef<Record<string, string[]>>({});
   const mapDragRef = useRef<{ startX: number; startY: number; startCx: number; startCy: number } | null>(null);
+  const warmIntentTimeoutRef = useRef<number | null>(null);
+  const [nearViewportIds, setNearViewportIds] = useState<Record<string, true>>({});
 
   const rankedVideos = useMemo(
     () => rankBySemanticIntent(mockVideos, activeQuery).filter((video) => !failedMediaIds[video.id]),
@@ -221,7 +223,7 @@ export default function Discover() {
   }, []);
 
   useEffect(() => {
-    const candidates = rankedVideos.slice(0, Math.min(visibleCount + 18, rankedVideos.length));
+    const candidates = rankedVideos.slice(0, Math.min(visibleCount + 6, rankedVideos.length));
     const unchecked = candidates.filter((video) => !checkedMediaIdsRef.current.has(video.id));
     if (unchecked.length === 0) return;
 
@@ -272,53 +274,36 @@ export default function Discover() {
   }, [rankedVideos.length]);
 
   useEffect(() => {
+    const nodes = Object.values(gridTileRefs.current).filter((node): node is HTMLButtonElement => Boolean(node));
+    if (nodes.length === 0) return;
+
+    // Track only tiles near viewport and progressively warm nearby media.
     const observer = new IntersectionObserver(
       (entries) => {
+        const next: Record<string, true> = {};
         entries.forEach((entry) => {
-          const video = entry.target as HTMLVideoElement;
-          if (!video) return;
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
-            video.play().catch(() => undefined);
-          } else {
-            video.pause();
-          }
+          if (!entry.isIntersecting) return;
+          const id = (entry.target as HTMLButtonElement).dataset.videoId;
+          if (!id) return;
+          next[id] = true;
         });
+        setNearViewportIds((prev) => ({ ...prev, ...next }));
       },
-      { threshold: [0.4, 0.55, 0.8] }
+      { rootMargin: '220px 0px', threshold: [0.01, 0.2] }
     );
 
-    Object.values(gridVideoRefs.current).forEach((video) => {
-      if (video) observer.observe(video);
-    });
-
+    nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
   }, [tiles]);
 
-
   useEffect(() => {
-    if (!isNearbyMapOpen) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target as HTMLVideoElement;
-          if (!video) return;
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-            video.play().catch(() => undefined);
-          } else {
-            video.pause();
-          }
-        });
-      },
-      { threshold: [0.45, 0.6, 0.8] }
-    );
-
-    Object.values(nearbyVideoRefs.current).forEach((video) => {
-      if (video) observer.observe(video);
+    const ordered = rankedVideos.filter((video) => nearViewportIds[video.id]);
+    const warmCount = getWarmBudget().discoverWarmupCount;
+    ordered.slice(0, warmCount).forEach((video) => {
+      warmImage(video.thumbnail);
+      warmVideoMetadata(video.videoUrl);
     });
-
-    return () => observer.disconnect();
-  }, [isNearbyMapOpen, nearbyReels]);
+  }, [nearViewportIds, rankedVideos]);
 
   const openReelInFeed = (videoId: string) => {
     navigate(`/?reel=${encodeURIComponent(videoId)}`);
@@ -474,6 +459,9 @@ export default function Discover() {
       if (viewportDebounceRef.current) {
         window.clearTimeout(viewportDebounceRef.current);
       }
+      if (warmIntentTimeoutRef.current) {
+        window.clearTimeout(warmIntentTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -617,45 +605,37 @@ export default function Discover() {
             </div>
           ) : (
             <div className="grid grid-cols-3 auto-rows-[120px] gap-1.5 grid-flow-dense">
-              {tiles.map(({ video, shape, span }) => (
+              {tiles.map(({ video, span }) => (
                 <button
                   key={video.id}
+                  ref={(el) => {
+                    gridTileRefs.current[video.id] = el;
+                  }}
+                  data-video-id={video.id}
                   onClick={() => openReelInFeed(video.id)}
+                  onMouseEnter={() => {
+                    if (warmIntentTimeoutRef.current) window.clearTimeout(warmIntentTimeoutRef.current);
+                    // Intent-based warmup: pre-warm video metadata only when interaction is likely.
+                    warmIntentTimeoutRef.current = window.setTimeout(() => {
+                      warmVideoMetadata(video.videoUrl);
+                    }, 140);
+                  }}
+                  onMouseLeave={() => {
+                    if (warmIntentTimeoutRef.current) {
+                      window.clearTimeout(warmIntentTimeoutRef.current);
+                      warmIntentTimeoutRef.current = null;
+                    }
+                  }}
                   className={`relative overflow-hidden rounded-[10px] ${span}`}
                 >
-                  {video.id.startsWith('ldr-') ? (
-                    <img
-                      src={video.thumbnail}
-                      alt={video.product?.name ?? video.username}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      onError={() => markMediaFailed(video.id)}
-                    />
-                  ) : shape === 'portrait' ? (
-                    <video
-                      ref={(el) => {
-                        gridVideoRefs.current[video.id] = el;
-                      }}
-                      src={video.videoUrl}
-                      poster={video.thumbnail}
-                      muted
-                      loop
-                      playsInline
-                      preload="metadata"
-                      className="w-full h-full object-cover"
-                      onMouseEnter={(e) => e.currentTarget.play().catch(() => undefined)}
-                      onMouseLeave={(e) => e.currentTarget.pause()}
-                      onError={() => markMediaFailed(video.id)}
-                    />
-                  ) : (
-                    <img
-                      src={video.thumbnail}
-                      alt={video.product?.name ?? video.username}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      onError={() => markMediaFailed(video.id)}
-                    />
-                  )}
+                  <img
+                    src={video.thumbnail}
+                    alt={video.product?.name ?? video.username}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    // Discover grid intentionally stays poster-first (no autoplay) for smooth scroll.
+                    onError={() => markMediaFailed(video.id)}
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                 </button>
               ))}
@@ -727,15 +707,12 @@ export default function Discover() {
                       className="relative shrink-0 w-[34vw] max-w-[136px] aspect-[9/16] overflow-hidden rounded-[10px] bg-zinc-200"
                     >
                       <video
-                        ref={(el) => {
-                          nearbyVideoRefs.current[video.id] = el;
-                        }}
                         src={video.videoUrl}
                         poster={video.thumbnail}
                         muted
                         loop
                         playsInline
-                        preload="metadata"
+                        preload="none"
                         className="w-full h-full object-cover"
                       />
                     </button>
