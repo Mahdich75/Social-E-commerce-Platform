@@ -322,11 +322,45 @@ const mappedBaseProducts: Product[] = baseMockProducts.map((product) => {
 
 export const mockProducts: Product[] = [
   ...mappedBaseProducts,
-  ...localStaticProducts.map((product) => ({
-    ...product,
-    image: product.image.startsWith('http') ? product.image : staticAsset(product.image),
-    creatorAvatar: staticAsset(product.creatorAvatar),
-  })),
+  ...localStaticProducts.map((product) => {
+    const localProductOverrides: Record<
+      string,
+      { name: string; description: string; price: number; category: string }
+    > = {
+      'local-row-product-1': {
+        name: 'بیگودی فومی',
+        description: 'پک بیگودی فومی بدون حرارت مناسب حالت‌دهی مو با کمترین آسیب.',
+        price: 28900000,
+        category: 'beauty/hair',
+      },
+      'local-row-product-2': {
+        name: 'ماکت ماشین کلکسیونی',
+        description: 'ماکت ماشین فلزی کلکسیونی با جزئیات بالا، مناسب دکور و هدیه.',
+        price: 84500000,
+        category: 'hobby/model',
+      },
+      'local-row-product-3': {
+        name: 'زیورآلات دست‌ساز قاشق و چنگال',
+        description: 'اکسسوری دست‌ساز هنری با متریال استیل، مناسب استایل خاص و متفاوت.',
+        price: 129000000,
+        category: 'accessories/handmade',
+      },
+      'local-row-product-4': {
+        name: 'دسته گل دست‌ساز تزئینی',
+        description: 'دسته‌گل دست‌ساز سفارشی مناسب هدیه، دکور و مناسبت‌های خاص.',
+        price: 175000000,
+        category: 'gift/flowers',
+      },
+    };
+
+    const overrides = localProductOverrides[product.id];
+    return {
+      ...product,
+      ...(overrides ?? {}),
+      image: product.image.startsWith('http') ? product.image : staticAsset(product.image),
+      creatorAvatar: staticAsset(product.creatorAvatar),
+    };
+  }),
 ];
 
 const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
@@ -756,8 +790,43 @@ const baseReelCommentsFa: Record<string, string[]> = {
 };
 
 export const reelCommentsFa: Record<string, string[]> = {
+  ...Object.fromEntries(
+    localStaticVideoSeeds.map((video) => {
+      const localCommentsByProductId: Record<string, string[]> = {
+        'local-row-product-1': [
+          'برای موهای فر ریز هم جواب میده یا بیشتر برای موج درشته؟',
+          'این بیگودی فومی روی موی نازک رد نمیندازه؟',
+          'قیمتش نسبت به بازار خوبه، ارسال فوری هم دارید؟',
+          'بدون حرارت واقعاً مو رو سالم‌تر نگه می‌داره 👌',
+          'پک کاملش چند تا بیگودی داره؟',
+        ],
+        'local-row-product-2': [
+          'این ماکت فلزیه یا ترکیبی؟ کیفیت رنگش عالیه.',
+          'برای هدیه تولد خیلی شیکه، جعبه کادویی هم داره؟',
+          'مقیاس دقیقش چند به چنده؟',
+          'جزئیات داخل کابین خیلی حرفه‌ایه 😍',
+          'قیمتش برای مدل کلکسیونی منطقیه.',
+        ],
+        'local-row-product-3': [
+          'این کار دست‌سازه؟ خیلی خاص و متفاوت شده ✨',
+          'حساسیت پوستی ایجاد نمی‌کنه؟',
+          'رنگش ثابت می‌مونه یا نیاز به مراقبت خاص داره؟',
+          'برای استایل مینیمال خیلی جذابه 👌',
+          'سفارش شخصی‌سازی هم می‌گیرید؟',
+        ],
+        'local-row-product-4': [
+          'این دسته گل برای هدیه سالگرد عالیه 💐',
+          'امکان انتخاب ترکیب رنگ هم دارید؟',
+          'دوامش چقدره؟ برای دکور طولانی‌مدت می‌خوام.',
+          'خیلی شیکه، برای میز کار عالی میشه.',
+          'ارسال برای شهرهای دیگه هم دارید؟',
+        ],
+      };
+
+      return [video.id, localCommentsByProductId[video.productId] ?? localStaticReelCommentsFa[video.id] ?? []];
+    })
+  ),
   ...baseReelCommentsFa,
-  ...localStaticReelCommentsFa,
 };
 
 
