@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { useWishlistStore } from '../store/useWishlistStore';
 import { ProductDrawer } from '../components/ProductDrawer';
 import { Product } from '../types';
-import { mockCreators, mockProducts, mockVideos } from '../data/mockData';
+import { mockCreators, mockProducts, mockVideos, profileMediaByUsername } from '../data/mockData';
 import { formatPriceToman } from '../utils/price';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useFollowStore } from '../store/useFollowStore';
@@ -21,49 +21,79 @@ export default function Profile() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductDrawerOpen, setIsProductDrawerOpen] = useState(false);
   const [peopleSheet, setPeopleSheet] = useState<'followers' | 'following' | null>(null);
-  const introReel = mockVideos.find((video) => video.id === '15');
-  const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(introReel?.videoUrl ?? null);
-  const [introVideoName, setIntroVideoName] = useState(introReel?.product?.name ?? 'intro_video.mp4');
+  const profileMedia = profileMediaByUsername[profileUsername];
+  const isFolderGeneratedProfile = Boolean(profileMedia);
+  const defaultIntroReel = mockVideos.find((video) => video.id === '15');
+  const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(null);
+  const [introVideoName, setIntroVideoName] = useState('');
   const introFileInputRef = useRef<HTMLInputElement>(null);
   const introVideoRef = useRef<HTMLVideoElement>(null);
   const profileCreator = mockCreators.find((creator) => creator.username === profileUsername);
   const profileAvatar = profileCreator?.avatar ?? `${import.meta.env.BASE_URL}pics/profile/avatar.jpg`;
   const isOwnProfile = profileUsername === 'shirinbuttons';
 
-  const followersList = useMemo(
-    () => [
+  const followersList = useMemo(() => {
+    const baseFollowers = [
       { username: 'golsare_nazi', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar1.jpg` },
       { username: 'style_guru', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar3.jpg` },
       { username: 'beauty_daily', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar3.jpg` },
       { username: 'tech_hub', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar1.jpg` },
-      ...followedUsernames
-        .filter((username) => username !== profileUsername)
-        .slice(0, 4)
-        .map((username) => ({
-          username,
-          avatar:
-            mockCreators.find((creator) => creator.username === username)?.avatar ??
-            `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg`,
-        })),
-    ],
-    [followedUsernames, profileUsername]
-  );
+    ];
 
-  const followingList = useMemo(
-    () => [
-      { username: 'puzzle_gallery', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar1.jpg` },
-      { username: 'massage_corner', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg` },
-      { username: 'olenz_ir', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg` },
-      { username: 'niloofar_daily', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar4.jpg` },
-      ...followedUsernames.slice(0, 8).map((username) => ({
+    const folderCreators = mockCreators
+      .filter((creator) => creator.username !== profileUsername && profileMediaByUsername[creator.username])
+      .map((creator) => ({ username: creator.username, avatar: creator.avatar }));
+
+    const followed = followedUsernames
+      .filter((username) => username !== profileUsername)
+      .slice(0, 8)
+      .map((username) => ({
         username,
         avatar:
           mockCreators.find((creator) => creator.username === username)?.avatar ??
           `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg`,
-      })),
-    ],
-    [followedUsernames]
-  );
+      }));
+
+    return [...folderCreators, ...followed, ...baseFollowers].filter(
+      (person, index, all) => all.findIndex((item) => item.username === person.username) === index
+    );
+  }, [followedUsernames, profileUsername]);
+
+  const followingList = useMemo(() => {
+    const baseFollowing = [
+      { username: 'puzzle_gallery', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar1.jpg` },
+      { username: 'massage_corner', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg` },
+      { username: 'olenz_ir', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg` },
+      { username: 'niloofar_daily', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar4.jpg` },
+    ];
+
+    const folderCreators = mockCreators
+      .filter((creator) => creator.username !== profileUsername && profileMediaByUsername[creator.username])
+      .map((creator) => ({ username: creator.username, avatar: creator.avatar }));
+
+    const followed = followedUsernames.slice(0, 8).map((username) => ({
+      username,
+      avatar:
+        mockCreators.find((creator) => creator.username === username)?.avatar ??
+        `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg`,
+    }));
+
+    return [...folderCreators, ...followed, ...baseFollowing].filter(
+      (person, index, all) => all.findIndex((item) => item.username === person.username) === index
+    );
+  }, [followedUsernames, profileUsername]);
+
+  const profileReels = useMemo(() => {
+    if (isFolderGeneratedProfile && profileMedia?.reels?.length) {
+      return profileMedia.reels.map((reel) => ({
+        id: reel.id,
+        videoUrl: reel.videoUrl,
+        thumbnail: reel.thumbnail,
+      }));
+    }
+
+    return mockVideos.slice(0, 11).map((video) => ({ id: video.id, videoUrl: video.videoUrl, thumbnail: video.thumbnail }));
+  }, [isFolderGeneratedProfile, profileMedia?.reels]);
 
   const followersCount = useMemo(() => {
     const base = profileUsername === 'shirinbuttons' ? 2400000 : 18600;
@@ -74,6 +104,17 @@ export default function Profile() {
     const base = profileUsername === 'shirinbuttons' ? 382 : 146;
     return base + (isOwnProfile ? followedUsernames.length : 0);
   }, [followedUsernames.length, isOwnProfile, profileUsername]);
+
+  useEffect(() => {
+    if (isFolderGeneratedProfile) {
+      setIntroVideoUrl(profileMedia?.introVideoUrl ?? null);
+      setIntroVideoName(profileMedia?.introVideoName ?? 'intro_video.mp4');
+      return;
+    }
+
+    setIntroVideoUrl(defaultIntroReel?.videoUrl ?? null);
+    setIntroVideoName(defaultIntroReel?.product?.name ?? 'intro_video.mp4');
+  }, [defaultIntroReel?.product?.name, defaultIntroReel?.videoUrl, isFolderGeneratedProfile, profileMedia?.introVideoName, profileMedia?.introVideoUrl]);
 
   useEffect(() => {
     return () => {
@@ -258,9 +299,19 @@ export default function Profile() {
 
           <TabsContent value="reels" className="mt-0 p-0">
             <div className="grid grid-cols-3 gap-1 p-1">
-              {mockVideos.slice(0, 11).map((video) => (
-                <div key={video.id} className="aspect-[9/16] bg-zinc-100 relative overflow-hidden">
-                  <img src={video.thumbnail} alt="Video" className="w-full h-full object-cover" />
+              {profileReels.map((reel) => (
+                <div key={reel.id} className="aspect-[9/16] bg-zinc-100 relative overflow-hidden">
+                  {isFolderGeneratedProfile ? (
+                    <video
+                      src={reel.videoUrl}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : (
+                    <img src={reel.thumbnail} alt="Video" className="w-full h-full object-cover" />
+                  )}
                 </div>
               ))}
             </div>

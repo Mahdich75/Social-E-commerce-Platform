@@ -1,9 +1,10 @@
 ﻿import { Product, VideoFeed } from '../types';
 import { localStaticProducts, localStaticReelCommentsFa, localStaticVideoSeeds } from './localReelsStatic';
+import { generatedProfileCreators, generatedProfileMedia } from './generatedProfiles';
 
 const staticAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 
-export const mockCreators = [
+const baseMockCreators = [
   { id: 'creator_shirinbuttons', username: 'shirinbuttons', avatar: staticAsset('/pics/profile/avatar.jpg') },
   { id: 'creator_tech_hub', username: 'tech_hub', avatar: staticAsset('/pics/avatars/avatar1.jpg') },
   { id: 'creator_puzzle_gallery', username: 'puzzle_gallery', avatar: staticAsset('/pics/avatars/avatar1.jpg') },
@@ -12,9 +13,20 @@ export const mockCreators = [
   { id: 'creator_style_guru', username: 'style_guru', avatar: staticAsset('/pics/avatars/avatar3.jpg') },
 ] as const;
 
+export const mockCreators = [
+  ...baseMockCreators,
+  ...generatedProfileCreators
+    .filter((creator) => !baseMockCreators.some((baseCreator) => baseCreator.username === creator.username))
+    .map((creator) => ({
+      id: creator.id,
+      username: creator.username,
+      avatar: staticAsset(creator.avatar),
+    })),
+];
+
 const creatorById = Object.fromEntries(mockCreators.map((creator) => [creator.id, creator])) as Record<
   string,
-  (typeof mockCreators)[number]
+  (typeof baseMockCreators)[number]
 >;
 
 const creatorByCategory: Record<string, string> = {
@@ -330,25 +342,25 @@ export const mockProducts: Product[] = [
       'local-row-product-1': {
         name: 'بیگودی فومی',
         description: 'پک بیگودی فومی بدون حرارت مناسب حالت‌دهی مو با کمترین آسیب.',
-        price: 28900000,
+        price: 6900000,
         category: 'beauty/hair',
       },
       'local-row-product-2': {
         name: 'ماکت ماشین کلکسیونی',
         description: 'ماکت ماشین فلزی کلکسیونی با جزئیات بالا، مناسب دکور و هدیه.',
-        price: 84500000,
+        price: 125000000,
         category: 'hobby/model',
       },
       'local-row-product-3': {
         name: 'زیورآلات دست‌ساز قاشق و چنگال',
         description: 'اکسسوری دست‌ساز هنری با متریال استیل، مناسب استایل خاص و متفاوت.',
-        price: 129000000,
+        price: 35900000,
         category: 'accessories/handmade',
       },
       'local-row-product-4': {
         name: 'دسته گل دست‌ساز تزئینی',
         description: 'دسته‌گل دست‌ساز سفارشی مناسب هدیه، دکور و مناسبت‌های خاص.',
-        price: 175000000,
+        price: 24900000,
         category: 'gift/flowers',
       },
     };
@@ -765,6 +777,33 @@ mockVideos.forEach((video) => {
   video.similarReels = relatedPool.slice(0, 6);
 });
 
+export type ProfileMediaEntry = {
+  introVideoUrl: string | null;
+  introVideoName: string;
+  reels: Array<{
+    id: string;
+    videoUrl: string;
+    thumbnail: string;
+    title: string;
+    isIntro: boolean;
+  }>;
+};
+
+export const profileMediaByUsername: Record<string, ProfileMediaEntry> = Object.fromEntries(
+  generatedProfileMedia.map((entry) => [
+    entry.username,
+    {
+      introVideoUrl: entry.introVideoUrl ? staticAsset(entry.introVideoUrl) : null,
+      introVideoName: entry.introVideoName,
+      reels: entry.reels.map((reel) => ({
+        ...reel,
+        videoUrl: staticAsset(reel.videoUrl),
+        thumbnail: reel.thumbnail.startsWith('http') ? reel.thumbnail : staticAsset(reel.thumbnail),
+      })),
+    },
+  ])
+);
+
 const baseReelCommentsFa: Record<string, string[]> = {
   v1: ['خیلی قشنگه 😍', 'کارِ دست؟ فوق‌العاده‌ست 👏'],
   v2: ['نورش خیلی تمیزه، برای کار حرفه‌ای عالیه.', 'گارانتی رسمی هم داره؟'],
@@ -794,32 +833,32 @@ export const reelCommentsFa: Record<string, string[]> = {
     localStaticVideoSeeds.map((video) => {
       const localCommentsByProductId: Record<string, string[]> = {
         'local-row-product-1': [
-          'برای موهای فر ریز هم جواب میده یا بیشتر برای موج درشته؟',
-          'این بیگودی فومی روی موی نازک رد نمیندازه؟',
-          'قیمتش نسبت به بازار خوبه، ارسال فوری هم دارید؟',
-          'بدون حرارت واقعاً مو رو سالم‌تر نگه می‌داره 👌',
-          'پک کاملش چند تا بیگودی داره؟',
+          'برای موهای نازک هم خوب فرم میده یا بیشتر برای مو پرحجم مناسبه؟',
+          'بیگودی فومی بدون حرارت خیلی بهتره برای سلامت مو 👌',
+          'قیمتش نسبت به مدل‌های مشابه بازار منطقیه، موجودی کامل دارید؟',
+          'برای موج درشت چه سایزی پیشنهاد می‌دید؟',
+          'ارسال فوری تهران هم دارید؟',
         ],
         'local-row-product-2': [
-          'این ماکت فلزیه یا ترکیبی؟ کیفیت رنگش عالیه.',
-          'برای هدیه تولد خیلی شیکه، جعبه کادویی هم داره؟',
-          'مقیاس دقیقش چند به چنده؟',
-          'جزئیات داخل کابین خیلی حرفه‌ایه 😍',
-          'قیمتش برای مدل کلکسیونی منطقیه.',
+          'این ماکت کاملا فلزیه یا بخشی پلاستیکه؟',
+          'برای کلکسیونرها عالیه، مقیاس دقیقش چند به چنده؟',
+          'جزئیات بدنه و کابین خیلی حرفه‌ایه 😍',
+          'با جعبه سالم و پلمپ ارسال می‌شه؟',
+          'قیمتش برای ماکت کلکسیونی خوبه، تخفیف هم می‌خوره؟',
         ],
         'local-row-product-3': [
-          'این کار دست‌سازه؟ خیلی خاص و متفاوت شده ✨',
-          'حساسیت پوستی ایجاد نمی‌کنه؟',
-          'رنگش ثابت می‌مونه یا نیاز به مراقبت خاص داره؟',
-          'برای استایل مینیمال خیلی جذابه 👌',
-          'سفارش شخصی‌سازی هم می‌گیرید؟',
+          'این کار کاملا دست‌سازه؟ واقعا خاصه ✨',
+          'برای پوست حساس مشکلی ایجاد نمی‌کنه؟',
+          'رنگ و آبکاریش با استفاده روزمره ثابت می‌مونه؟',
+          'برای هدیه خیلی یونیکه، بسته‌بندی کادویی دارید؟',
+          'سفارشی‌سازی طرح هم انجام می‌دید؟',
         ],
         'local-row-product-4': [
-          'این دسته گل برای هدیه سالگرد عالیه 💐',
-          'امکان انتخاب ترکیب رنگ هم دارید؟',
-          'دوامش چقدره؟ برای دکور طولانی‌مدت می‌خوام.',
-          'خیلی شیکه، برای میز کار عالی میشه.',
-          'ارسال برای شهرهای دیگه هم دارید؟',
+          'این دسته گل برای هدیه تولد و سالگرد خیلی شیکه 💐',
+          'امکان انتخاب رنگ‌بندی سفارشی هم دارید؟',
+          'برای دکور طولانی‌مدت ماندگاریش چقدره؟',
+          'برای مناسبت رسمی هم مدل مشابه دارید؟',
+          'ارسال به شهرستان هم انجام می‌دید؟',
         ],
       };
 
