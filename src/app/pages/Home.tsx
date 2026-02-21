@@ -1,7 +1,7 @@
-import { CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+﻿import { CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Bell, Bookmark, Heart, MessageCircle, MessageSquare, Share2, ShoppingBag, Volume2, VolumeX } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { mockVideos, reelCommentsFa } from '../data/mockData';
+import { FEED_ROW_MATRIX, mockVideos, reelCommentsFa } from '../data/mockData';
 import { ProductDrawer } from '../components/ProductDrawer';
 import { CommentsDrawer } from '../components/CommentsDrawer';
 import { SwipeGuide } from '../components/SwipeGuide';
@@ -24,6 +24,43 @@ interface FeedRow {
   reels: VideoFeed[];
 }
 
+const applyFeedRowMatrix = (rows: FeedRow[]): FeedRow[] => {
+  if (FEED_ROW_MATRIX.length === 0) return rows;
+
+  const videoById = new Map<string, VideoFeed>();
+  rows.forEach((row) => {
+    row.reels.forEach((video) => videoById.set(video.id, video));
+  });
+
+  const used = new Set<string>();
+  const manualRows: FeedRow[] = FEED_ROW_MATRIX.map((ids, idx) => {
+    const reels = ids
+      .map((id) => videoById.get(id))
+      .filter((video): video is VideoFeed => Boolean(video))
+      .filter((video) => {
+        if (used.has(video.id)) return false;
+        used.add(video.id);
+        return true;
+      });
+
+    return {
+      rowId: `manual-matrix-${idx + 1}`,
+      kind: 'concept',
+      reels,
+      product: reels.length === 1 ? reels[0].product : undefined,
+    };
+  }).filter((row) => row.reels.length > 0);
+
+  const untouchedRows: FeedRow[] = rows
+    .map((row) => ({
+      ...row,
+      reels: row.reels.filter((video) => !used.has(video.id)),
+    }))
+    .filter((row) => row.reels.length > 0);
+
+  return [...manualRows, ...untouchedRows];
+};
+
 const FEATURED_PRODUCT_NAMES = ['???? ?? ????', '??????? ??????'];
 const DENTAL_LIGHT_PRODUCT_NAME = '??? ??? ?????? ?????????? ??????';
 const EVERDELL_PRODUCT_NAME = '???? ???? Everdell';
@@ -40,13 +77,13 @@ const PROCESS_STAGE_ORDER: Record<string, number> = {
   result: 8,
 };
 const COMMENT_PREVIEW_USERS = [
-  { username: 'niloofar.shop', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
-  { username: 'amir_style', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43d?w=100&h=100&fit=crop' },
-  { username: 'sara.market', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop' },
-  { username: 'mobin.review', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop' },
-  { username: 'parisa_buy', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop' },
-  { username: 'zahra.kala', avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop' },
-  { username: 'omid.store', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop' },
+  { username: 'gole.manoto.shop', avatar: `${import.meta.env.BASE_URL}pics/profile/SaveGram.App_448391674_868650641947746_1136848269883995888_n.jpg` },
+  { username: 'sara.relax.shop', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar2.jpg` },
+  { username: 'mina.beautyroom', avatar: `${import.meta.env.BASE_URL}pics/profile/SaveGram.App_448391831_1021416656274678_3127390317532272881_n.jpg` },
+  { username: 'elmira.homevibe', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar3.jpg` },
+  { username: 'mehrdad.gadgetshop', avatar: `${import.meta.env.BASE_URL}pics/avatars/avatar1.jpg` },
+  { username: 'niloofar.puzzlehome', avatar: `${import.meta.env.BASE_URL}pics/profile/SaveGram.App_607748365_3282722678561396_6572646971023833447_n.jpg` },
+  { username: 'parisa.stylecorner', avatar: `${import.meta.env.BASE_URL}pics/profile/SaveGram.App_608007693_759320143196138_7188041296922647007_n.jpg` },
 ] as const;
 
 export default function Home() {
@@ -288,7 +325,7 @@ export default function Home() {
       reels: [...firstRow.reels, ...sortedPrioritized],
     };
 
-    return rowsWithoutPrioritized;
+    return applyFeedRowMatrix(rowsWithoutPrioritized);
   }, [baseReels]);
 
   useEffect(() => {
@@ -599,12 +636,14 @@ export default function Home() {
   return (
     <>
       <div
-        className="relative w-full h-screen overflow-hidden bg-black"
+        className="relative w-full overflow-hidden bg-black"
         style={
           {
             // Unified safe offsets for feed overlays (header + bottom nav + device insets).
             '--feed-safe-top': 'calc(var(--top-nav-actual-height) + clamp(0.5rem, 1.6vh, 0.9rem))',
-            '--feed-safe-bottom': 'calc(var(--bottom-nav-actual-height) + clamp(0.5rem, 1.8vh, 0.95rem))',
+            '--feed-overlay-clearance': 'clamp(0.28rem, 0.8vh, 0.55rem)',
+            '--feed-safe-bottom': 'calc(var(--bottom-nav-actual-height) + var(--feed-overlay-clearance) + env(safe-area-inset-bottom, 0px))',
+            height: '100dvh',
           } as CSSProperties
         }
       >
@@ -618,7 +657,7 @@ export default function Home() {
             const rowHorizontalPos = horizontalPositions[rowIndex] ?? 0;
 
             return (
-              <section key={`row-${row.rowId}`} className="relative h-screen snap-start overflow-hidden">
+              <section key={`row-${row.rowId}`} className="relative snap-start overflow-hidden" style={{ height: '100dvh' }}>
                 <div
                   ref={(el) => {
                     horizontalRefs.current[rowIndex] = el;
@@ -726,7 +765,7 @@ export default function Home() {
                         <div
                           className="absolute left-0 right-0 px-4 z-10 pointer-events-none"
                           // Keep feed product card anchored above bottom nav with responsive safe spacing.
-                          style={{ bottom: 'var(--feed-safe-bottom)' }}
+                          style={{ bottom: 'calc(var(--feed-safe-bottom) + clamp(0.18rem, 0.45vh, 0.3rem))' }}
                         >
                           <div className="mb-2 pr-24 pointer-events-auto w-[min(60vw,14.5rem)] max-w-[calc(100%-7.25rem)]">
                             <div className="flex items-center gap-2">
@@ -748,7 +787,7 @@ export default function Home() {
                                     isFollowingPage ? 'bg-emerald-500' : 'bg-red-500'
                                   }`}
                                 >
-                                  <span className="text-white text-[10px] font-bold">{isFollowingPage ? '✓' : '+'}</span>
+                                  <span className="text-white text-[10px] font-bold">{isFollowingPage ? 'âœ“' : '+'}</span>
                                 </div>
                               </button>
                               <button
@@ -841,6 +880,8 @@ export default function Home() {
     </>
   );
 }
+
+
 
 
 

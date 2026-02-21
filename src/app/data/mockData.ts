@@ -4,13 +4,78 @@ import { generatedProfileCreators, generatedProfileMedia } from './generatedProf
 
 const staticAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 
+const curatedAvatarPool = [
+  staticAsset('/pics/profile/avatar.jpg'),
+  staticAsset('/pics/avatars/avatar1.jpg'),
+  staticAsset('/pics/avatars/avatar2.jpg'),
+  staticAsset('/pics/avatars/avatar3.jpg'),
+  staticAsset('/pics/avatars/avatar4.jpg'),
+  staticAsset('/pics/profile/SaveGram.App_448391674_868650641947746_1136848269883995888_n.jpg'),
+  staticAsset('/pics/profile/SaveGram.App_448391825_449107604735778_6801152150428754043_n.jpg'),
+  staticAsset('/pics/profile/SaveGram.App_448391831_1021416656274678_3127390317532272881_n.jpg'),
+  staticAsset('/pics/profile/SaveGram.App_471937391_18483278374009808_3031180894812256315_n.jpg'),
+  staticAsset('/pics/profile/SaveGram.App_539048858_18520031005009808_8127691562838658154_n.jpg'),
+  staticAsset('/pics/profile/SaveGram.App_607748365_3282722678561396_6572646971023833447_n.jpg'),
+  staticAsset('/pics/profile/SaveGram.App_608007693_759320143196138_7188041296922647007_n.jpg'),
+] as const;
+
+const usernameOverrides: Record<string, string> = {
+  tech_hub: 'mehrdad.gadgetshop',
+  puzzle_gallery: 'niloofar.puzzlehome',
+  massage_corner: 'sara.relax.shop',
+  beauty_daily: 'mina.beautyroom',
+  style_guru: 'parisa.stylecorner',
+  golsare_nazi: 'gole.manoto.shop',
+  itsmehamoon: 'hamoon.boardgames',
+  styleline_ir: 'leila.styleline',
+  gadget_kade: 'amir.gadgetkadeh',
+  homevibe_ir: 'elmira.homevibe',
+  fitgear_store: 'iman.fitgear',
+  streetwear_lab: 'navid.streetwear',
+  parandeh_camera: 'arman.parandehcam',
+  pazzel_world: 'pazel.world.shop',
+  maquette_house: 'maquette.by.ati',
+  wellness_shop: 'wellness.by.naz',
+  aramish_plus: 'aramesh.plus.shop',
+  takbama_ir: 'takbama.store',
+  trend_massage: 'trend.massage.home',
+  massage_compare: 'massage.compare.ir',
+  olenz_ir: 'olenz.ir',
+  reyhan_banoo_19: 'reyhanoo.shop',
+};
+
+const avatarOverridesByUsername: Record<string, string> = {
+  tech_hub: curatedAvatarPool[1],
+  puzzle_gallery: curatedAvatarPool[6],
+  massage_corner: curatedAvatarPool[2],
+  beauty_daily: curatedAvatarPool[7],
+  style_guru: curatedAvatarPool[8],
+  golsare_nazi: curatedAvatarPool[5],
+  olenz_ir: curatedAvatarPool[9],
+  itsmehamoon: curatedAvatarPool[10],
+  styleline_ir: curatedAvatarPool[3],
+  reyhan_banoo_19: curatedAvatarPool[4],
+  gadget_kade: curatedAvatarPool[11],
+  homevibe_ir: curatedAvatarPool[1],
+  fitgear_store: curatedAvatarPool[2],
+  streetwear_lab: curatedAvatarPool[6],
+  parandeh_camera: curatedAvatarPool[3],
+  pazzel_world: curatedAvatarPool[5],
+  maquette_house: curatedAvatarPool[7],
+  wellness_shop: curatedAvatarPool[8],
+  aramish_plus: curatedAvatarPool[9],
+  takbama_ir: curatedAvatarPool[10],
+  trend_massage: curatedAvatarPool[11],
+  massage_compare: curatedAvatarPool[4],
+};
+
 const baseMockCreators = [
   { id: 'creator_shirinbuttons', username: 'shirinbuttons', avatar: staticAsset('/pics/profile/avatar.jpg') },
-  { id: 'creator_tech_hub', username: 'tech_hub', avatar: staticAsset('/pics/avatars/avatar1.jpg') },
-  { id: 'creator_puzzle_gallery', username: 'puzzle_gallery', avatar: staticAsset('/pics/avatars/avatar1.jpg') },
-  { id: 'creator_massage_corner', username: 'massage_corner', avatar: staticAsset('/pics/avatars/avatar2.jpg') },
-  { id: 'creator_beauty_daily', username: 'beauty_daily', avatar: staticAsset('/pics/avatars/avatar3.jpg') },
-  { id: 'creator_style_guru', username: 'style_guru', avatar: staticAsset('/pics/avatars/avatar3.jpg') },
+  { id: 'creator_tech_hub', username: 'mehrdad.gadgetshop', avatar: staticAsset('/pics/avatars/avatar1.jpg') },
+  { id: 'creator_puzzle_gallery', username: 'niloofar.puzzlehome', avatar: staticAsset('/pics/profile/SaveGram.App_448391825_449107604735778_6801152150428754043_n.jpg') },
+  { id: 'creator_massage_corner', username: 'sara.relax.shop', avatar: staticAsset('/pics/avatars/avatar2.jpg') },
+  { id: 'creator_beauty_daily', username: 'mina.beautyroom', avatar: staticAsset('/pics/profile/SaveGram.App_448391831_1021416656274678_3127390317532272881_n.jpg') },
+  { id: 'creator_style_guru', username: 'parisa.stylecorner', avatar: staticAsset('/pics/profile/SaveGram.App_471937391_18483278374009808_3031180894812256315_n.jpg') },
 ] as const;
 
 export const mockCreators = [
@@ -78,6 +143,19 @@ export type FeedReelManualMove = {
 // { videoId: 'v3', toRow: 1, position: 'start' } -> move v3 to start of row 1
 export const FEED_REEL_MANUAL_MOVES: FeedReelManualMove[] = [
   // { videoId: 'v20', toRow: 2 },
+];
+
+// Optional hard row matrix for Home/Feed.
+// Only listed reel ids are re-grouped; all other reels remain with existing logic/order.
+// Each inner array is one horizontal row.
+// Example:
+// [
+//   ['v12', 'v13', 'v14'], // puzzle process in one row
+//   ['v16', 'v17', 'v18', 'v19', 'v21'], // massager concept row
+// ]
+export const FEED_ROW_MATRIX: string[][] = [
+  // ['v12', 'v13', 'v14'],
+  // ['v16', 'v17', 'v18', 'v19', 'v21'],
 ];
 
 export type ProductCardOverride = Partial<
@@ -769,13 +847,20 @@ const localStaticVideos: Omit<VideoFeed, 'similarReels'>[] = localStaticVideoSee
 
 const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [...manualBaseVideos, ...localStaticVideos];
 
-export const mockVideos: VideoFeed[] = baseVideos.map((video) => ({
-  ...video,
-  description: REEL_TEXT_OVERRIDES[video.id]?.description ?? video.description,
-  hashtags:
-    REEL_TEXT_OVERRIDES[video.id]?.hashtags?.map((tag) => (tag.startsWith('#') ? tag : `#${tag}`)) ?? video.hashtags,
-  similarReels: [],
-}));
+export const mockVideos: VideoFeed[] = baseVideos.map((video, index) => {
+  const normalizedUsername = usernameOverrides[video.username] ?? video.username;
+  const normalizedAvatar = avatarOverridesByUsername[video.username] ?? video.userAvatar ?? curatedAvatarPool[index % curatedAvatarPool.length];
+
+  return {
+    ...video,
+    username: normalizedUsername,
+    userAvatar: normalizedAvatar,
+    description: REEL_TEXT_OVERRIDES[video.id]?.description ?? video.description,
+    hashtags:
+      REEL_TEXT_OVERRIDES[video.id]?.hashtags?.map((tag) => (tag.startsWith('#') ? tag : `#${tag}`)) ?? video.hashtags,
+    similarReels: [],
+  };
+});
 
 const videoById = Object.fromEntries(mockVideos.map((video) => [video.id, video])) as Record<string, VideoFeed>;
 
