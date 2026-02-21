@@ -61,6 +61,129 @@ const applyFeedRowMatrix = (rows: FeedRow[]): FeedRow[] => {
   return [...manualRows, ...untouchedRows];
 };
 
+const enforceBirdCameraPlacement = (rows: FeedRow[]): FeedRow[] => {
+  const targetVideoIds = ['v20', 'v2'];
+  const sportsAnchorIds = new Set(['v5', 'v7', 'v8', 'v10', 'v11']);
+
+  let toRowIndex = -1;
+
+  rows.forEach((row, idx) => {
+    if (row.reels.some((reel) => sportsAnchorIds.has(reel.id))) toRowIndex = idx;
+  });
+
+  if (toRowIndex === -1) return rows;
+
+  let nextRows = rows;
+  targetVideoIds.forEach((targetVideoId) => {
+    const fromRowIndex = nextRows.findIndex((row) => row.reels.some((reel) => reel.id === targetVideoId));
+    if (fromRowIndex === -1 || fromRowIndex === toRowIndex) return;
+
+    const sourceRow = nextRows[fromRowIndex];
+    const targetReel = sourceRow.reels.find((reel) => reel.id === targetVideoId);
+    if (!targetReel) return;
+
+    nextRows = nextRows
+      .map((row, idx) => {
+        if (idx === fromRowIndex) {
+          return {
+            ...row,
+            reels: row.reels.filter((reel) => reel.id !== targetVideoId),
+          };
+        }
+        if (idx === toRowIndex) {
+          return {
+            ...row,
+            reels: [...row.reels.filter((reel) => reel.id !== targetVideoId), targetReel],
+          };
+        }
+        return row;
+      })
+      .filter((row) => row.reels.length > 0);
+  });
+
+  return nextRows;
+};
+
+const enforceSecondRowTailPlacement = (rows: FeedRow[]): FeedRow[] => {
+  const targetRowIndex = 1; // second row
+  const tailVideoIds = ['v6', 'v3'];
+  if (rows.length <= targetRowIndex) return rows;
+
+  let nextRows = rows.map((row) => ({ ...row, reels: [...row.reels] }));
+  tailVideoIds.forEach((videoId) => {
+    let movedReel: VideoFeed | null = null;
+
+    nextRows = nextRows
+      .map((row) => {
+        const hit = row.reels.find((reel) => reel.id === videoId);
+        if (hit) movedReel = hit;
+        return { ...row, reels: row.reels.filter((reel) => reel.id !== videoId) };
+      });
+
+    if (!movedReel) return;
+    const safeTarget = Math.min(targetRowIndex, nextRows.length - 1);
+    const row = nextRows[safeTarget];
+    nextRows[safeTarget] = {
+      ...row,
+      reels: [...row.reels, movedReel],
+    };
+  });
+
+  return nextRows.filter((row) => row.reels.length > 0);
+};
+
+const enforceLastRowsSplit = (rows: FeedRow[]): FeedRow[] => {
+  const balmAndConditionerProductIds = new Set(['11', '4']); // بالم لب + کرم کاندیشنر
+  const headbandAndButtonsProductIds = new Set(['1', '15', 'btn-1', 'btn-2', 'btn-3', 'btn-4', 'btn-5', 'btn-6', 'btn-7']); // هدبند + دکمه‌ها
+
+  const balmConditionerReels: VideoFeed[] = [];
+  const headbandButtonsReels: VideoFeed[] = [];
+
+  const cleanedRows = rows
+    .map((row) => {
+      const remaining = row.reels.filter((reel) => {
+        const productId = reel.product?.id;
+        if (!productId) return true;
+        if (balmAndConditionerProductIds.has(productId)) {
+          balmConditionerReels.push(reel);
+          return false;
+        }
+        if (headbandAndButtonsProductIds.has(productId)) {
+          headbandButtonsReels.push(reel);
+          return false;
+        }
+        return true;
+      });
+
+      return { ...row, reels: remaining };
+    })
+    .filter((row) => row.reels.length > 0);
+
+  const byIdUnique = (reels: VideoFeed[]) =>
+    reels.filter((reel, index, all) => all.findIndex((item) => item.id === reel.id) === index);
+
+  const nextRows = [...cleanedRows];
+  const groupedA = byIdUnique(balmConditionerReels);
+  const groupedB = byIdUnique(headbandButtonsReels);
+
+  if (groupedA.length > 0) {
+    nextRows.push({
+      rowId: 'tail-balm-conditioner',
+      kind: 'concept',
+      reels: groupedA,
+    });
+  }
+  if (groupedB.length > 0) {
+    nextRows.push({
+      rowId: 'tail-headband-buttons',
+      kind: 'concept',
+      reels: groupedB,
+    });
+  }
+
+  return nextRows;
+};
+
 const FEATURED_PRODUCT_NAMES = ['???? ?? ????', '??????? ??????'];
 const DENTAL_LIGHT_PRODUCT_NAME = '??? ??? ?????? ?????????? ??????';
 const EVERDELL_PRODUCT_NAME = '???? ???? Everdell';
@@ -302,17 +425,24 @@ export default function Home() {
       .filter((row) => row.reels.length > 0);
 
     if (prioritizedReels.length === 0) {
-      return rowsAfterLastMove;
+      const matrixApplied = applyFeedRowMatrix(rowsAfterLastMove);
+      const withBirdPlacement = enforceBirdCameraPlacement(matrixApplied);
+      const withSecondRowTail = enforceSecondRowTailPlacement(withBirdPlacement);
+      return enforceLastRowsSplit(withSecondRowTail);
     }
 
     if (rowsWithoutPrioritized.length === 0) {
-      return [
+      const seededRows = [
         {
           rowId: 'moved-priority-row',
           kind: 'concept',
           reels: prioritizedReels,
         },
       ];
+      const matrixApplied = applyFeedRowMatrix(seededRows);
+      const withBirdPlacement = enforceBirdCameraPlacement(matrixApplied);
+      const withSecondRowTail = enforceSecondRowTailPlacement(withBirdPlacement);
+      return enforceLastRowsSplit(withSecondRowTail);
     }
 
     const sortedPrioritized = prioritizedReels.slice().sort((a, b) => {
@@ -327,7 +457,10 @@ export default function Home() {
       reels: [...firstRow.reels, ...sortedPrioritized],
     };
 
-    return applyFeedRowMatrix(rowsWithoutPrioritized);
+    const matrixApplied = applyFeedRowMatrix(rowsWithoutPrioritized);
+    const withBirdPlacement = enforceBirdCameraPlacement(matrixApplied);
+    const withSecondRowTail = enforceSecondRowTailPlacement(withBirdPlacement);
+    return enforceLastRowsSplit(withSecondRowTail);
   }, [baseReels]);
 
   useEffect(() => {
