@@ -156,14 +156,6 @@ export default function Profile() {
     e.target.value = '';
   };
 
-  const handleRemoveIntroVideo = () => {
-    if (introVideoUrl?.startsWith('blob:')) {
-      URL.revokeObjectURL(introVideoUrl);
-    }
-    setIntroVideoUrl(null);
-    setIntroVideoName('');
-  };
-
   const fantasyButtonProducts = mockProducts.filter(
     (product) =>
       product.id.startsWith('btn-') ||
@@ -189,22 +181,6 @@ export default function Profile() {
                 Intro Video
               </h2>
               <input ref={introFileInputRef} type="file" accept="video/*" className="hidden" onChange={handleUploadIntroVideo} />
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleOpenVideoPicker}
-                  className="text-xs font-semibold px-3 py-1.5 bg-black text-white rounded-full hover:bg-zinc-800 transition-colors ui-pressable ui-focus-ring"
-                >
-                  {introVideoUrl ? 'Replace' : 'Upload'}
-                </button>
-                {introVideoUrl && (
-                  <button
-                    onClick={handleRemoveIntroVideo}
-                    className="text-xs font-semibold px-3 py-1.5 border border-zinc-300 rounded-full hover:bg-zinc-50 transition-colors ui-pressable ui-focus-ring"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
             </div>
 
             {introVideoUrl ? (
