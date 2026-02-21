@@ -54,6 +54,78 @@ const creatorByProductId: Record<string, string> = {
   '18': 'creator_tech_hub',
 };
 
+// -----------------------------
+// Static editing controls (single source in mockData.ts)
+// -----------------------------
+export const FEED_LAYOUT_STATIC = {
+  topRowProductNames: ['پازل سه بعدی', 'ماساژور رباتیک'],
+  hiddenProductNames: ['روبوتایم طرح کافه'],
+  moveProductReelsToLastRow: ['کیت نور دوقلوی دندانپزشکی اوسینو', 'دوربین پرنده'],
+  moveProductReelsToFirstRow: ['بازی فکری Everdell'],
+} as const;
+
+export type FeedReelManualMove = {
+  videoId: string;
+  // 1-based row number to make manual editing easier.
+  toRow: number;
+  // optional: 'start' | 'end' (default: 'end')
+  position?: 'start' | 'end';
+};
+
+// Quick manual reel placement by video id.
+// Example:
+// { videoId: 'v20', toRow: 2 } -> move v20 to end of row 2
+// { videoId: 'v3', toRow: 1, position: 'start' } -> move v3 to start of row 1
+export const FEED_REEL_MANUAL_MOVES: FeedReelManualMove[] = [
+  // { videoId: 'v20', toRow: 2 },
+];
+
+export type ProductCardOverride = Partial<
+  Pick<Product, 'name' | 'price' | 'image' | 'description' | 'category' | 'sizes' | 'rating' | 'reviews'>
+>;
+
+// Edit product card content here by product id.
+export const PRODUCT_CARD_OVERRIDES: Record<string, ProductCardOverride> = {
+  'local-row-product-1': {
+    name: 'بیگودی فومی',
+    description: 'پک بیگودی فومی بدون حرارت مناسب حالت‌دهی مو با کمترین آسیب.',
+    price: 6900000,
+    category: 'beauty/hair',
+  },
+  'local-row-product-2': {
+    name: 'ماکت ماشین کلکسیونی',
+    description: 'ماکت ماشین فلزی کلکسیونی با جزئیات بالا، مناسب دکور و هدیه.',
+    price: 125000000,
+    category: 'hobby/model',
+  },
+  'local-row-product-3': {
+    name: 'زیورآلات دست‌ساز قاشق و چنگال',
+    description: 'اکسسوری دست‌ساز هنری با متریال استیل، مناسب استایل خاص و متفاوت.',
+    price: 35900000,
+    category: 'accessories/handmade',
+  },
+  'local-row-product-4': {
+    name: 'دسته گل دست‌ساز تزئینی',
+    description: 'دسته‌گل دست‌ساز سفارشی مناسب هدیه، دکور و مناسبت‌های خاص.',
+    price: 24900000,
+    category: 'gift/flowers',
+  },
+};
+
+export type ReelTextOverride = {
+  description?: string;
+  hashtags?: string[];
+};
+
+// Edit reel text/hashtags here by reel id.
+export const REEL_TEXT_OVERRIDES: Record<string, ReelTextOverride> = {
+  // Example:
+  // v1: {
+  //   description: 'متن جدید ریلز ۱',
+  //   hashtags: ['#هدبند', '#استایل'],
+  // },
+};
+
 const baseMockProducts: Omit<Product, 'creatorId' | 'creatorUsername' | 'creatorAvatar'>[] = [
   {
     id: '1',
@@ -335,37 +407,7 @@ const mappedBaseProducts: Product[] = baseMockProducts.map((product) => {
 export const mockProducts: Product[] = [
   ...mappedBaseProducts,
   ...localStaticProducts.map((product) => {
-    const localProductOverrides: Record<
-      string,
-      { name: string; description: string; price: number; category: string }
-    > = {
-      'local-row-product-1': {
-        name: 'بیگودی فومی',
-        description: 'پک بیگودی فومی بدون حرارت مناسب حالت‌دهی مو با کمترین آسیب.',
-        price: 6900000,
-        category: 'beauty/hair',
-      },
-      'local-row-product-2': {
-        name: 'ماکت ماشین کلکسیونی',
-        description: 'ماکت ماشین فلزی کلکسیونی با جزئیات بالا، مناسب دکور و هدیه.',
-        price: 125000000,
-        category: 'hobby/model',
-      },
-      'local-row-product-3': {
-        name: 'زیورآلات دست‌ساز قاشق و چنگال',
-        description: 'اکسسوری دست‌ساز هنری با متریال استیل، مناسب استایل خاص و متفاوت.',
-        price: 35900000,
-        category: 'accessories/handmade',
-      },
-      'local-row-product-4': {
-        name: 'دسته گل دست‌ساز تزئینی',
-        description: 'دسته‌گل دست‌ساز سفارشی مناسب هدیه، دکور و مناسبت‌های خاص.',
-        price: 24900000,
-        category: 'gift/flowers',
-      },
-    };
-
-    const overrides = localProductOverrides[product.id];
+    const overrides = PRODUCT_CARD_OVERRIDES[product.id];
     return {
       ...product,
       ...(overrides ?? {}),
@@ -729,6 +771,9 @@ const baseVideos: Omit<VideoFeed, 'similarReels'>[] = [...manualBaseVideos, ...l
 
 export const mockVideos: VideoFeed[] = baseVideos.map((video) => ({
   ...video,
+  description: REEL_TEXT_OVERRIDES[video.id]?.description ?? video.description,
+  hashtags:
+    REEL_TEXT_OVERRIDES[video.id]?.hashtags?.map((tag) => (tag.startsWith('#') ? tag : `#${tag}`)) ?? video.hashtags,
   similarReels: [],
 }));
 

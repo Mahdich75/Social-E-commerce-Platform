@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Bell, Bookmark, Heart, MessageCircle, MessageSquare, Share2, ShoppingBag, Volume2, VolumeX } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { mockVideos, reelCommentsFa } from '../data/mockData';
@@ -24,11 +24,11 @@ interface FeedRow {
   reels: VideoFeed[];
 }
 
-const FEATURED_PRODUCT_NAMES = ['پازل سه بعدی', 'ماساژور رباتیک'];
-const DENTAL_LIGHT_PRODUCT_NAME = 'کیت نور دوقلوی دندانپزشکی اوسینو';
-const EVERDELL_PRODUCT_NAME = 'بازی فکری Everdell';
-const BIRD_CAMERA_PRODUCT_NAME = 'دوربین پرنده';
-const HIDDEN_REEL_PRODUCT_NAMES = ['روبوتایم طرح کافه'];
+const FEATURED_PRODUCT_NAMES = ['???? ?? ????', '??????? ??????'];
+const DENTAL_LIGHT_PRODUCT_NAME = '??? ??? ?????? ?????????? ??????';
+const EVERDELL_PRODUCT_NAME = '???? ???? Everdell';
+const BIRD_CAMERA_PRODUCT_NAME = '?????? ?????';
+const HIDDEN_REEL_PRODUCT_NAMES = ['???????? ??? ????'];
 const PROCESS_STAGE_ORDER: Record<string, number> = {
   intro: 1,
   build: 2,
@@ -66,6 +66,7 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const horizontalRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const topNavRef = useRef<HTMLDivElement | null>(null);
   const verticalScrollRafRef = useRef<number | null>(null);
   const horizontalScrollRafRef = useRef<Record<number, number | null>>({});
   const warmQueueRef = useRef<string[]>([]);
@@ -489,6 +490,27 @@ export default function Home() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreen);
   }, []);
 
+  useLayoutEffect(() => {
+    const node = topNavRef.current;
+    if (!node) return;
+
+    const updateTopNavHeight = () => {
+      const height = node.getBoundingClientRect().height;
+      if (!height) return;
+      document.documentElement.style.setProperty('--top-nav-actual-height', `${height}px`);
+    };
+
+    updateTopNavHeight();
+    const resizeObserver = new ResizeObserver(updateTopNavHeight);
+    resizeObserver.observe(node);
+    window.addEventListener('resize', updateTopNavHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateTopNavHeight);
+    };
+  }, []);
+
   const handleLike = (video: VideoFeed) => {
     const wasLiked = isLiked(video.id);
     toggleLike(video.id);
@@ -533,11 +555,11 @@ export default function Home() {
     if (!product) return reelComments.length > 0 ? reelComments : undefined;
 
     const productComments = [
-      `${product.name} خیلی قشنگه 😍`,
-      `از @${product.creatorUsername} کسی خرید داشته؟ برای ${product.category} کیفیتش چطوره؟`,
-      `قیمت ${product.name} که @${product.creatorUsername} گذاشته نسبت به بازار خوبه؟`,
-      `@${product.creatorUsername} این محصول رو موجود دارید؟ می‌خوام سفارش بدم 🛒`,
-      `@${product.creatorUsername} رنگ‌بندی/مدل دیگه برای ${product.name} هم هست؟`,
+      `${product.name} ???? ????? ??`,
+      `?? @${product.creatorUsername} ??? ???? ?????? ???? ${product.category} ?????? ??????`,
+      `???? ${product.name} ?? @${product.creatorUsername} ?????? ???? ?? ????? ?????`,
+      `@${product.creatorUsername} ??? ????? ?? ????? ?????? ??????? ????? ??? ??`,
+      `@${product.creatorUsername} ????????/??? ???? ???? ${product.name} ?? ????`,
     ];
 
     const mergedComments = [...reelComments, ...productComments].filter(
@@ -576,7 +598,16 @@ export default function Home() {
 
   return (
     <>
-      <div className="relative w-full h-screen overflow-hidden bg-black">
+      <div
+        className="relative w-full h-screen overflow-hidden bg-black"
+        style={
+          {
+            // Unified safe offsets for feed overlays (header + bottom nav + device insets).
+            '--feed-safe-top': 'calc(var(--top-nav-actual-height) + clamp(0.5rem, 1.6vh, 0.9rem))',
+            '--feed-safe-bottom': 'calc(var(--bottom-nav-actual-height) + clamp(0.5rem, 1.8vh, 0.95rem))',
+          } as CSSProperties
+        }
+      >
         <div
           ref={scrollRef}
           onScroll={handleVerticalScroll}
@@ -637,7 +668,10 @@ export default function Home() {
                         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/45 pointer-events-none" />
 
                         {video.isLive && (
-                          <div className="absolute top-28 left-4 z-20 pointer-events-none">
+                          <div
+                            className="absolute left-4 z-20 pointer-events-none"
+                            style={{ top: 'var(--feed-safe-top)' }}
+                          >
                             <div className="flex items-center gap-2 bg-red-500 px-3 py-1.5 rounded-md">
                               <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                               <span className="text-white text-sm font-bold">LIVE</span>
@@ -645,7 +679,12 @@ export default function Home() {
                           </div>
                         )}
 
-                        <div className="absolute right-0 top-[56%] -translate-y-1/2 w-20 flex flex-col items-center gap-4 z-30 pointer-events-none">
+                        <div
+                          className="absolute right-0 w-20 flex flex-col items-center justify-end gap-[clamp(0.7rem,2vh,1rem)] z-30 pointer-events-none"
+                          style={{
+                            bottom: 'var(--feed-safe-bottom)',
+                          }}
+                        >
                           <button
                             onClick={() => {
                               toggleFollow(video.username);
@@ -660,7 +699,7 @@ export default function Home() {
                                 isFollowingPage ? 'bg-emerald-500' : 'bg-red-500'
                               }`}
                             >
-                              <span className="text-white text-xs font-bold">{isFollowingPage ? '✓' : '+'}</span>
+                              <span className="text-white text-xs font-bold">{isFollowingPage ? '?' : '+'}</span>
                             </div>
                           </button>
 
@@ -706,8 +745,8 @@ export default function Home() {
 
                         <div
                           className="absolute left-0 right-0 px-4 z-10 pointer-events-none"
-                          // Keep feed product card above fixed bottom nav across mobile Chrome/PWA viewport changes.
-                          style={{ bottom: 'max(var(--feed-product-bottom-offset), 8rem)' }}
+                          // Keep feed product card anchored above bottom nav with responsive safe spacing.
+                          style={{ bottom: 'var(--feed-safe-bottom)' }}
                         >
                           <div className="mb-2 pr-24 pointer-events-auto w-[min(60vw,14.5rem)] max-w-[calc(100%-7.25rem)]">
                             <button
@@ -743,7 +782,7 @@ export default function Home() {
                               ))}
                             </div>
                             {inlineComments.length > 2 && (
-                              <p className="text-[10px] text-white/75 mt-1">برای دیدن همه کامنت‌ها بزن</p>
+                              <p className="text-[10px] text-white/75 mt-1">???? ???? ??? ???????? ???</p>
                             )}
                           </button>
 
@@ -775,7 +814,10 @@ export default function Home() {
           })}
         </div>
 
-        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[414px] z-30 bg-gradient-to-b from-black/55 to-transparent pt-[max(env(safe-area-inset-top),0.5rem)] pb-3 pointer-events-none">
+        <div
+          ref={topNavRef}
+          className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[414px] z-30 bg-gradient-to-b from-black/55 to-transparent pt-[max(env(safe-area-inset-top),0.5rem)] pb-3 pointer-events-none"
+        >
           <div className="px-4">
             <div className="flex items-center justify-between pointer-events-auto">
               <Link
@@ -787,11 +829,7 @@ export default function Home() {
                 <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-black" />
               </Link>
 
-              <div className="flex items-center gap-4">
-                <button className="text-white/60 text-[15px] font-semibold">Following</button>
-                <div className="w-px h-3 bg-white/25" />
-                <button className="text-white text-[17px] font-bold">For You</button>
-              </div>
+              <div aria-hidden className="w-10 h-10" />
 
               <div className="flex items-center gap-1 pointer-events-auto">
                 <button
@@ -829,3 +867,12 @@ export default function Home() {
     </>
   );
 }
+
+
+
+
+
+
+
+
+

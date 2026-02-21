@@ -13,41 +13,41 @@ type Activity = {
 const activities: Activity[] = [
   {
     id: 'n1',
-    user: 'parisa_style',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-    action: 'bought Leather Wallet',
-    time: '2m ago',
+    user: 'پریسا_استایل',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
+    action: 'کیف پول چرم دست‌دوز رو خرید',
+    time: '۲ دقیقه پیش',
     productThumb: 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=100&h=100&fit=crop',
   },
   {
     id: 'n2',
-    user: 'ali_reviews',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-    action: 'added Sunglasses to wishlist',
-    time: '14m ago',
+    user: 'علی_بررسی',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop',
+    action: 'عینک آفتابی رو به لیست علاقه‌مندی‌ها اضافه کرد',
+    time: '۱۴ دقیقه پیش',
     productThumb: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=100&h=100&fit=crop',
   },
   {
     id: 'n3',
-    user: 'fateme_mod',
-    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop',
-    action: 'sent you a follow request',
-    time: '1h ago',
+    user: 'فاطمه_مد',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+    action: 'برات درخواست دنبال‌کردن فرستاد',
+    time: '۱ ساعت پیش',
   },
   {
     id: 'n4',
-    user: 'omid_compare',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop',
-    action: 'bought Minimalist Backpack',
-    time: '3h ago',
+    user: 'امید_مقایسه',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
+    action: 'کوله مینیمال رو خرید',
+    time: '۳ ساعت پیش',
     productThumb: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=100&h=100&fit=crop',
   },
   {
     id: 'n5',
-    user: 'niloofar_daily',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
-    action: 'added Smart Watch to wishlist',
-    time: '5h ago',
+    user: 'نیلوفر_دیلی',
+    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop',
+    action: 'ساعت هوشمند رو به علاقه‌مندی‌ها اضافه کرد',
+    time: '۵ ساعت پیش',
     productThumb: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&h=100&fit=crop',
   },
 ];
@@ -87,4 +87,3 @@ export default function Notifications() {
     </div>
   );
 }
-
