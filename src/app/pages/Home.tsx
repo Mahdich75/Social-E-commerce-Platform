@@ -184,6 +184,32 @@ const enforceLastRowsSplit = (rows: FeedRow[]): FeedRow[] => {
   return nextRows;
 };
 
+const enforceNasimIntoHandmadeFlowersRow = (rows: FeedRow[]): FeedRow[] => {
+  const targetVideoId = 'v22';
+  const flowersProductId = 'local-row-product-4';
+
+  const fromRowIndex = rows.findIndex((row) => row.reels.some((reel) => reel.id === targetVideoId));
+  const toRowIndex = rows.findIndex((row) => row.reels.some((reel) => reel.product?.id === flowersProductId));
+  if (fromRowIndex === -1 || toRowIndex === -1 || fromRowIndex === toRowIndex) return rows;
+
+  const targetReel = rows[fromRowIndex].reels.find((reel) => reel.id === targetVideoId);
+  if (!targetReel) return rows;
+
+  const nextRows = rows
+    .map((row, idx) => {
+      if (idx === fromRowIndex) {
+        return { ...row, reels: row.reels.filter((reel) => reel.id !== targetVideoId) };
+      }
+      if (idx === toRowIndex) {
+        return { ...row, reels: [...row.reels.filter((reel) => reel.id !== targetVideoId), targetReel] };
+      }
+      return row;
+    })
+    .filter((row) => row.reels.length > 0);
+
+  return nextRows;
+};
+
 const FEATURED_PRODUCT_NAMES = ['???? ?? ????', '??????? ??????'];
 const DENTAL_LIGHT_PRODUCT_NAME = '??? ??? ?????? ?????????? ??????';
 const EVERDELL_PRODUCT_NAME = '???? ???? Everdell';
@@ -428,7 +454,8 @@ export default function Home() {
       const matrixApplied = applyFeedRowMatrix(rowsAfterLastMove);
       const withBirdPlacement = enforceBirdCameraPlacement(matrixApplied);
       const withSecondRowTail = enforceSecondRowTailPlacement(withBirdPlacement);
-      return enforceLastRowsSplit(withSecondRowTail);
+      const withLastRowsSplit = enforceLastRowsSplit(withSecondRowTail);
+      return enforceNasimIntoHandmadeFlowersRow(withLastRowsSplit);
     }
 
     if (rowsWithoutPrioritized.length === 0) {
@@ -442,7 +469,8 @@ export default function Home() {
       const matrixApplied = applyFeedRowMatrix(seededRows);
       const withBirdPlacement = enforceBirdCameraPlacement(matrixApplied);
       const withSecondRowTail = enforceSecondRowTailPlacement(withBirdPlacement);
-      return enforceLastRowsSplit(withSecondRowTail);
+      const withLastRowsSplit = enforceLastRowsSplit(withSecondRowTail);
+      return enforceNasimIntoHandmadeFlowersRow(withLastRowsSplit);
     }
 
     const sortedPrioritized = prioritizedReels.slice().sort((a, b) => {
@@ -460,7 +488,8 @@ export default function Home() {
     const matrixApplied = applyFeedRowMatrix(rowsWithoutPrioritized);
     const withBirdPlacement = enforceBirdCameraPlacement(matrixApplied);
     const withSecondRowTail = enforceSecondRowTailPlacement(withBirdPlacement);
-    return enforceLastRowsSplit(withSecondRowTail);
+    const withLastRowsSplit = enforceLastRowsSplit(withSecondRowTail);
+    return enforceNasimIntoHandmadeFlowersRow(withLastRowsSplit);
   }, [baseReels]);
 
   useEffect(() => {

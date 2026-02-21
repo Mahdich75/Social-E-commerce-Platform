@@ -3,6 +3,15 @@ import { localStaticProducts, localStaticReelCommentsFa, localStaticVideoSeeds }
 import { generatedProfileCreators, generatedProfileMedia } from './generatedProfiles';
 
 const staticAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+const FEMALE_AVATAR_1 =
+  'https://cdn.nody.ir/files/2025/05/26/nody-%D8%B9%DA%A9%D8%B3-%D9%BE%D8%B1%D9%88%D9%81%D8%A7%DB%8C%D9%84-%D8%AF%D8%AE%D8%AA%D8%B1%D8%A7%D9%86%D9%87-%D8%A8%D8%AF%D9%88%D9%86-%DA%86%D9%87%D8%B1%D9%87-%D8%B9%DA%A9%D8%B3-%D9%BE%D8%B1%D9%88%D9%81%D8%A7%DB%8C%D9%84-%D8%AF%D8%AE%D8%AA%D8%B1%D8%A7%D9%86%D9%87-%D8%A8%D8%AF%D9%88%D9%86-%D8%B5%D9%88%D8%B1%D8%AA-%D8%B9%DA%A9%D8%B3-%D9%BE%D8%B1%D9%88%D9%81%D8%A7%DB%8C%D9%84-%D8%AF%D8%AE%D8%AA%D8%B1-%D8%A7%DB%8C%D8%B1%D8%A7%D9%86%DB%8C-%D8%A8%D8%AF%D9%88%D9%86-%D8%B5%D9%88%D8%B1%D8%AA-1748228111.jpg';
+const FEMALE_AVATAR_2 =
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm9Mzk6idAkUMRLeeI9Dtxz1Aw53eei00odg&s';
+const FEMALE_AVATAR_3 = 'https://setare.com/files/1397/04/12/download-13.jpeg';
+const LOCAL_AVATAR_1 = staticAsset('/pics/avatars/avatar1.jpg');
+const LOCAL_AVATAR_2 = staticAsset('/pics/avatars/avatar2.jpg');
+const LOCAL_AVATAR_3 = staticAsset('/pics/avatars/avatar3.jpg');
+const LOCAL_AVATAR_4 = staticAsset('/pics/avatars/avatar4.jpg');
 
 const curatedAvatarPool = [
   staticAsset('/pics/profile/avatar.jpg'),
@@ -45,37 +54,40 @@ const usernameOverrides: Record<string, string> = {
 };
 
 const avatarOverridesByUsername: Record<string, string> = {
-  tech_hub: curatedAvatarPool[1],
-  puzzle_gallery: curatedAvatarPool[6],
-  massage_corner: curatedAvatarPool[2],
-  beauty_daily: curatedAvatarPool[7],
-  style_guru: curatedAvatarPool[8],
-  golsare_nazi: curatedAvatarPool[5],
-  olenz_ir: curatedAvatarPool[9],
-  itsmehamoon: curatedAvatarPool[10],
-  styleline_ir: curatedAvatarPool[3],
-  reyhan_banoo_19: curatedAvatarPool[4],
-  gadget_kade: curatedAvatarPool[11],
-  homevibe_ir: curatedAvatarPool[1],
-  fitgear_store: curatedAvatarPool[2],
-  streetwear_lab: curatedAvatarPool[6],
-  parandeh_camera: curatedAvatarPool[3],
-  pazzel_world: curatedAvatarPool[5],
-  maquette_house: curatedAvatarPool[7],
-  wellness_shop: curatedAvatarPool[8],
-  aramish_plus: curatedAvatarPool[9],
-  takbama_ir: curatedAvatarPool[10],
-  trend_massage: curatedAvatarPool[11],
-  massage_compare: curatedAvatarPool[4],
+  tech_hub: LOCAL_AVATAR_1,
+  puzzle_gallery: FEMALE_AVATAR_1,
+  massage_corner: FEMALE_AVATAR_2,
+  beauty_daily: FEMALE_AVATAR_3,
+  style_guru: FEMALE_AVATAR_1,
+  golsare_nazi: FEMALE_AVATAR_2,
+  olenz_ir: LOCAL_AVATAR_4,
+  itsmehamoon: LOCAL_AVATAR_3,
+  styleline_ir: FEMALE_AVATAR_3,
+  reyhan_banoo_19: FEMALE_AVATAR_1,
+  gadget_kade: LOCAL_AVATAR_2,
+  homevibe_ir: FEMALE_AVATAR_2,
+  fitgear_store: LOCAL_AVATAR_2,
+  streetwear_lab: LOCAL_AVATAR_1,
+  parandeh_camera: LOCAL_AVATAR_3,
+  pazzel_world: LOCAL_AVATAR_4,
+  maquette_house: FEMALE_AVATAR_3,
+  wellness_shop: FEMALE_AVATAR_1,
+  aramish_plus: FEMALE_AVATAR_2,
+  takbama_ir: LOCAL_AVATAR_1,
+  trend_massage: FEMALE_AVATAR_3,
+  massage_compare: LOCAL_AVATAR_2,
+  nasim: FEMALE_AVATAR_2,
+  shirinbuttons: FEMALE_AVATAR_1,
+  'sahar.floweratelier': FEMALE_AVATAR_3,
 };
 
 const baseMockCreators = [
-  { id: 'creator_shirinbuttons', username: 'shirinbuttons', avatar: staticAsset('/pics/profile/avatar.jpg') },
+  { id: 'creator_shirinbuttons', username: 'shirinbuttons', avatar: FEMALE_AVATAR_1 },
   { id: 'creator_tech_hub', username: 'mehrdad.gadgetshop', avatar: staticAsset('/pics/avatars/avatar1.jpg') },
-  { id: 'creator_puzzle_gallery', username: 'niloofar.puzzlehome', avatar: staticAsset('/pics/profile/SaveGram.App_448391825_449107604735778_6801152150428754043_n.jpg') },
-  { id: 'creator_massage_corner', username: 'sara.relax.shop', avatar: staticAsset('/pics/avatars/avatar2.jpg') },
-  { id: 'creator_beauty_daily', username: 'mina.beautyroom', avatar: staticAsset('/pics/profile/SaveGram.App_448391831_1021416656274678_3127390317532272881_n.jpg') },
-  { id: 'creator_style_guru', username: 'parisa.stylecorner', avatar: staticAsset('/pics/profile/SaveGram.App_471937391_18483278374009808_3031180894812256315_n.jpg') },
+  { id: 'creator_puzzle_gallery', username: 'niloofar.puzzlehome', avatar: FEMALE_AVATAR_2 },
+  { id: 'creator_massage_corner', username: 'sara.relax.shop', avatar: FEMALE_AVATAR_3 },
+  { id: 'creator_beauty_daily', username: 'mina.beautyroom', avatar: FEMALE_AVATAR_1 },
+  { id: 'creator_style_guru', username: 'parisa.stylecorner', avatar: FEMALE_AVATAR_2 },
 ] as const;
 
 export const mockCreators = [
@@ -167,18 +179,21 @@ export type ProductCardOverride = Partial<
 export const PRODUCT_CARD_OVERRIDES: Record<string, ProductCardOverride> = {
   'local-row-product-1': {
     name: 'بیگودی فومی',
+    image: 'https://tooskamarket.ir/wp-content/uploads/2024/08/IMG_0232.jpeg',
     description: 'پک بیگودی فومی بدون حرارت مناسب حالت‌دهی مو با کمترین آسیب.',
     price: 6900000,
     category: 'beauty/hair',
   },
   'local-row-product-2': {
     name: 'ماکت ماشین کلکسیونی',
+    image: 'https://pioio.com/wp-content/uploads/2023/11/1957-Chevrolet-Corvette-1.png',
     description: 'ماکت ماشین فلزی کلکسیونی با جزئیات بالا، مناسب دکور و هدیه.',
     price: 125000000,
     category: 'hobby/model',
   },
   'local-row-product-3': {
     name: 'زیورآلات دست‌ساز قاشق و چنگال',
+    image: 'https://www.decodarya.com/uploads/products/d75455.jpeg?m=thumb&w=1280&h=800&q=high',
     description: 'اکسسوری دست‌ساز هنری با متریال استیل، مناسب استایل خاص و متفاوت.',
     price: 35900000,
     category: 'accessories/handmade',
@@ -394,6 +409,17 @@ const baseMockProducts: Omit<Product, 'creatorId' | 'creatorUsername' | 'creator
     reviews: 318,
   },
   {
+    id: '19',
+    category: 'stationery/handmade',
+    name: 'دفترچه کیفی',
+    price: 700000,
+    image: 'https://janebi.com/janebi/9fd2/files/194615.jpg',
+    description: 'کلاسور کیفی دست‌ساز با طراحی خاص، مناسب نگهداری یادداشت‌ها و مدارک با استایل هنری.',
+    sizes: ['One Size'],
+    rating: 4.6,
+    reviews: 128,
+  },
+  {
     id: 'btn-1',
     category: 'fantasy-buttons',
     name: 'دکمه فانتزی مدل آبی گل‌ریز',
@@ -487,10 +513,11 @@ export const mockProducts: Product[] = [
   ...mappedBaseProducts,
   ...localStaticProducts.map((product) => {
     const overrides = PRODUCT_CARD_OVERRIDES[product.id];
+    const mergedImage = overrides?.image ?? product.image;
     return {
       ...product,
       ...(overrides ?? {}),
-      image: product.image.startsWith('http') ? product.image : staticAsset(product.image),
+      image: mergedImage.startsWith('http') ? mergedImage : staticAsset(mergedImage),
       creatorAvatar: staticAsset(product.creatorAvatar),
     };
   }),
@@ -812,6 +839,22 @@ const manualBaseVideos: Omit<VideoFeed, 'similarReels'>[] = [
     isLive: false,
   },
   {
+    id: 'v22',
+    videoUrl: staticAsset('/videos/VID-20260221-WA0008.mp4'),
+    thumbnail: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=414&h=896&fit=crop',
+    username: 'nasim',
+    userAvatar: staticAsset('/pics/avatars/avatar4.jpg'),
+    likes: 5180,
+    comments: 342,
+    shares: 191,
+    description: 'کلاسور کیفی جدیدمون رو با گل‌های دست‌ساز ست کردیم 🌸👜 برای قیمت و جزئیات کلمه «کلاسور» رو کامنت کن.',
+    hashtags: ['#کلاسور_کیفی', '#گل_دست_ساز', '#لوازم_تحریر_خاص', '#هدیه_خاص'],
+    musicTitle: '',
+    processType: 'result',
+    product: mockProducts.find((product) => product.id === '19')!,
+    isLive: false,
+  },
+  {
     id: '15',
     videoUrl: staticAsset('/videos/intro_video.mp4'),
     thumbnail: staticAsset('/pics/profile/SaveGram.App_539048858_18520031005009808_8127691562838658154_n.jpg'),
@@ -956,6 +999,7 @@ const baseReelCommentsFa: Record<string, string[]> = {
   v19: ['ماساژش عمیقه و حس خوبی میده 💆‍♂️', 'برای هدیه هم انتخاب خیلی خوبیه 🎁'],
   v21: ['این مقایسه خیلی کاربردی بود 👌', 'بین خرچنگی و شیاتسو کدوم برای گردن درد بهتره؟'],
   v20: ['این دوربین پرنده خیلی خوش‌دسته 📸', 'کیفیت تصویرش برای ولاگ عالیه، موجود دارید؟'],
+  v22: ['این کلاسور کیفی خیلی خاصه 🌸', 'گل‌های دست‌ساز روش فوق‌العاده خوشگل شدن، موجودی دارید؟'],
   '15': ['ویدئوی معرفی خیلی حس خوب داشت 🌿', 'برای سفارش طرح کافه موجودی دارید؟'],
 };
 
@@ -998,7 +1042,3 @@ export const reelCommentsFa: Record<string, string[]> = {
   ),
   ...baseReelCommentsFa,
 };
-
-
-
-

@@ -1,5 +1,10 @@
-import { ChevronLeft } from 'lucide-react';
+﻿import { ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router';
+import { mockProducts } from '../data/mockData';
+
+const staticAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+const FEMALE_AVATAR_LINK =
+  'https://cdn.nody.ir/files/2025/05/26/nody-%D8%B9%DA%A9%D8%B3-%D9%BE%D8%B1%D9%88%D9%81%D8%A7%DB%8C%D9%84-%D8%AF%D8%AE%D8%AA%D8%B1%D8%A7%D9%86%D9%87-%D8%A8%D8%AF%D9%88%D9%86-%DA%86%D9%87%D8%B1%D9%87-%D8%B9%DA%A9%D8%B3-%D9%BE%D8%B1%D9%88%D9%81%D8%A7%DB%8C%D9%84-%D8%AF%D8%AE%D8%AA%D8%B1%D8%A7%D9%86%D9%87-%D8%A8%D8%AF%D9%88%D9%86-%D8%B5%D9%88%D8%B1%D8%AA-%D8%B9%DA%A9%D8%B3-%D9%BE%D8%B1%D9%88%D9%81%D8%A7%DB%8C%D9%84-%D8%AF%D8%AE%D8%AA%D8%B1-%D8%A7%DB%8C%D8%B1%D8%A7%D9%86%DB%8C-%D8%A8%D8%AF%D9%88%D9%86-%D8%B5%D9%88%D8%B1%D8%AA-1748228111.jpg';
 
 type Activity = {
   id: string;
@@ -10,45 +15,47 @@ type Activity = {
   productThumb?: string;
 };
 
+const productImage = (id: string, fallback: string) => mockProducts.find((p) => p.id === id)?.image ?? fallback;
+
 const activities: Activity[] = [
   {
     id: 'n1',
-    user: 'پریسا_استایل',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
-    action: 'کیف پول چرم دست‌دوز رو خرید',
+    user: 'parisa.style',
+    avatar: staticAsset('/pics/avatars/avatar3.jpg'),
+    action: 'کیف چرمی دست‌دوز را خرید',
     time: '۲ دقیقه پیش',
-    productThumb: 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=100&h=100&fit=crop',
+    productThumb: productImage('8', staticAsset('/images/reel-first-frames/ldr-70e033508449.jpg')),
   },
   {
     id: 'n2',
-    user: 'علی_بررسی',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop',
-    action: 'عینک آفتابی رو به لیست علاقه‌مندی‌ها اضافه کرد',
+    user: 'ali.review',
+    avatar: staticAsset('/pics/avatars/avatar1.jpg'),
+    action: 'عینک آفتابی را به علاقه‌مندی‌ها اضافه کرد',
     time: '۱۴ دقیقه پیش',
-    productThumb: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=100&h=100&fit=crop',
+    productThumb: productImage('5', staticAsset('/images/reel-first-frames/ldr-a3fe9f0c93dd.jpg')),
   },
   {
     id: 'n3',
-    user: 'فاطمه_مد',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+    user: 'fateme.mod',
+    avatar: FEMALE_AVATAR_LINK,
     action: 'برات درخواست دنبال‌کردن فرستاد',
     time: '۱ ساعت پیش',
   },
   {
     id: 'n4',
-    user: 'امید_مقایسه',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-    action: 'کوله مینیمال رو خرید',
+    user: 'omid.compare',
+    avatar: staticAsset('/pics/avatars/avatar2.jpg'),
+    action: 'کوله مینیمال را خرید',
     time: '۳ ساعت پیش',
-    productThumb: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=100&h=100&fit=crop',
+    productThumb: productImage('13', staticAsset('/images/reel-first-frames/ldr-737d42a0d4bf.jpg')),
   },
   {
     id: 'n5',
-    user: 'نیلوفر_دیلی',
-    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop',
-    action: 'ساعت هوشمند رو به علاقه‌مندی‌ها اضافه کرد',
+    user: 'niloofar.daily',
+    avatar: staticAsset('/pics/avatars/avatar3.jpg'),
+    action: 'ساعت هوشمند را به علاقه‌مندی‌ها اضافه کرد',
     time: '۵ ساعت پیش',
-    productThumb: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&h=100&fit=crop',
+    productThumb: productImage('10', staticAsset('/images/reel-first-frames/ldr-34dfe527ec64.jpg')),
   },
 ];
 

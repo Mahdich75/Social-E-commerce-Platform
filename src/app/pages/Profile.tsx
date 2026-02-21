@@ -29,7 +29,10 @@ export default function Profile() {
   const introFileInputRef = useRef<HTMLInputElement>(null);
   const introVideoRef = useRef<HTMLVideoElement>(null);
   const profileCreator = mockCreators.find((creator) => creator.username === profileUsername);
-  const profileAvatar = profileCreator?.avatar ?? `${import.meta.env.BASE_URL}pics/profile/avatar.jpg`;
+  const profileAvatar =
+    profileUsername === 'shirinbuttons'
+      ? `${import.meta.env.BASE_URL}pics/profile/avatar.jpg`
+      : profileCreator?.avatar ?? `${import.meta.env.BASE_URL}pics/profile/avatar.jpg`;
   const isOwnProfile = profileUsername === 'shirinbuttons';
 
   const followersList = useMemo(() => {
