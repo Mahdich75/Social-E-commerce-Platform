@@ -634,8 +634,6 @@ export default function Home() {
                     const isWishlisted = currentProduct
                       ? wishlistItems.some((item) => item.product.id === currentProduct.id)
                       : false;
-                    const inlineComments = inlineCommentsByVideoId[video.id] ?? [];
-                    const visibleInlineComments = inlineComments.slice(0, 2);
 
                     return (
                       <article
@@ -685,24 +683,6 @@ export default function Home() {
                             bottom: 'var(--feed-safe-bottom)',
                           }}
                         >
-                          <button
-                            onClick={() => {
-                              toggleFollow(video.username);
-                              toast.success(isFollowingPage ? `Unfollowed @${video.username}` : `Followed @${video.username}`);
-                            }}
-                            className="relative pointer-events-auto ui-pressable ui-focus-ring"
-                            aria-label={isFollowingPage ? `Unfollow ${video.username}` : `Follow ${video.username}`}
-                          >
-                            <img src={video.userAvatar} alt={video.username} className="w-11 h-11 rounded-full border-2 border-white" />
-                            <div
-                              className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full flex items-center justify-center border-2 border-black ${
-                                isFollowingPage ? 'bg-emerald-500' : 'bg-red-500'
-                              }`}
-                            >
-                              <span className="text-white text-xs font-bold">{isFollowingPage ? '?' : '+'}</span>
-                            </div>
-                          </button>
-
                           <button onClick={() => handleLike(video)} className="flex flex-col items-center gap-1 w-full pointer-events-auto ui-pressable ui-focus-ring">
                             <Heart className={`w-8 h-8 ${currentIsLiked ? 'fill-red-500 text-red-500' : 'text-white'}`} strokeWidth={2} />
                             <span className="text-white text-xs font-semibold text-center w-full leading-none">
@@ -749,42 +729,32 @@ export default function Home() {
                           style={{ bottom: 'var(--feed-safe-bottom)' }}
                         >
                           <div className="mb-2 pr-24 pointer-events-auto w-[min(60vw,14.5rem)] max-w-[calc(100%-7.25rem)]">
-                            <button
-                              onClick={() => navigate(`/profile?user=${encodeURIComponent(video.username)}`)}
-                              className="text-white font-bold text-base hover:text-white/85 transition-colors"
-                            >
-                              @{video.username}
-                            </button>
-                          </div>
-
-                          <button
-                            onClick={() => {
-                              setCommentsVideoId(video.id);
-                              setIsCommentsOpen(true);
-                            }}
-                            className="mb-2 w-[min(60vw,14.5rem)] max-w-[calc(100%-7.25rem)] px-1 py-1 text-left pointer-events-auto ui-pressable ui-focus-ring"
-                          >
-                            <div
-                              className="space-y-1.5"
-                              style={{
-                                maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
-                                WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
-                              }}
-                            >
-                              {visibleInlineComments.map((comment, idx) => (
-                                <div key={`${video.id}-inline-${idx}`} className="flex items-center gap-2">
-                                  <img src={comment.avatar} alt={comment.username} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
-                                  <p className="text-[12px] text-white leading-4 line-clamp-1">
-                                    <span className="font-semibold mr-1">{comment.username}</span>
-                                    {comment.text}
-                                  </p>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  toggleFollow(video.username);
+                                  toast.success(isFollowingPage ? `Unfollowed @${video.username}` : `Followed @${video.username}`);
+                                }}
+                                className="relative ui-pressable ui-focus-ring"
+                                aria-label={isFollowingPage ? `Unfollow ${video.username}` : `Follow ${video.username}`}
+                              >
+                                <img src={video.userAvatar} alt={video.username} className="w-8 h-8 rounded-full border border-white/85" />
+                                <div
+                                  className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center border border-black ${
+                                    isFollowingPage ? 'bg-emerald-500' : 'bg-red-500'
+                                  }`}
+                                >
+                                  <span className="text-white text-[10px] font-bold">{isFollowingPage ? '?' : '+'}</span>
                                 </div>
-                              ))}
+                              </button>
+                              <button
+                                onClick={() => navigate(`/profile?user=${encodeURIComponent(video.username)}`)}
+                                className="text-white font-bold text-base hover:text-white/85 transition-colors"
+                              >
+                                @{video.username}
+                              </button>
                             </div>
-                            {inlineComments.length > 2 && (
-                              <p className="text-[10px] text-white/75 mt-1">???? ???? ??? ???????? ???</p>
-                            )}
-                          </button>
+                          </div>
 
                           {currentProduct && !isFullscreenVideo && (
                             <div className="pointer-events-auto w-[min(60vw,14.5rem)] max-w-[calc(100%-7.25rem)]">
