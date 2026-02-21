@@ -8,6 +8,9 @@ export interface VendorListing {
   productId: string;
   vendorUsername: string;
   affiliateRate: number;
+  customProductName?: string;
+  customProductCategory?: string;
+  customProductPrice?: number;
   productImageName?: string;
   productDescription?: string;
   instagramUrl?: string;
@@ -35,6 +38,9 @@ interface CreatorFlowState {
     productId: string;
     vendorUsername: string;
     affiliateRate: number;
+    customProductName?: string;
+    customProductCategory?: string;
+    customProductPrice?: number;
     productImageName?: string;
     productDescription?: string;
     instagramUrl?: string;
@@ -60,7 +66,17 @@ export const useCreatorFlowStore = create<CreatorFlowState>()(
       vendorListings: [],
       creatorSubmissions: [],
 
-      addVendorListing: ({ productId, vendorUsername, affiliateRate, productImageName, productDescription, instagramUrl }) => {
+      addVendorListing: ({
+        productId,
+        vendorUsername,
+        affiliateRate,
+        customProductName,
+        customProductCategory,
+        customProductPrice,
+        productImageName,
+        productDescription,
+        instagramUrl,
+      }) => {
         const normalizedRate = Math.max(1, Math.min(50, Math.round(affiliateRate)));
         const existing = get().vendorListings.find(
           (item) => item.productId === productId && item.vendorUsername === vendorUsername && item.isActive
@@ -69,6 +85,9 @@ export const useCreatorFlowStore = create<CreatorFlowState>()(
           const updated = {
             ...existing,
             affiliateRate: normalizedRate,
+            customProductName: customProductName ?? existing.customProductName,
+            customProductCategory: customProductCategory ?? existing.customProductCategory,
+            customProductPrice: customProductPrice ?? existing.customProductPrice,
             productImageName: productImageName ?? existing.productImageName,
             productDescription: productDescription ?? existing.productDescription,
             instagramUrl: instagramUrl ?? existing.instagramUrl,
@@ -84,6 +103,9 @@ export const useCreatorFlowStore = create<CreatorFlowState>()(
           productId,
           vendorUsername,
           affiliateRate: normalizedRate,
+          customProductName,
+          customProductCategory,
+          customProductPrice,
           productImageName,
           productDescription,
           instagramUrl,

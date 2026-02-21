@@ -96,6 +96,7 @@ export default function Home() {
   const [commentsVideoId, setCommentsVideoId] = useState<string>(mockVideos[0]?.id ?? '');
   const [horizontalPositions, setHorizontalPositions] = useState<Record<number, number>>({});
   const [isMuted, setIsMuted] = useState(false);
+  const [soundIndicator, setSoundIndicator] = useState<'muted' | 'unmuted' | null>(null);
   const [isFullscreenVideo, setIsFullscreenVideo] = useState(false);
   const [loadedVideoKeys, setLoadedVideoKeys] = useState<Record<string, true>>({});
   const globalVolume = 0.9;
@@ -106,6 +107,7 @@ export default function Home() {
   const topNavRef = useRef<HTMLDivElement | null>(null);
   const verticalScrollRafRef = useRef<number | null>(null);
   const horizontalScrollRafRef = useRef<Record<number, number | null>>({});
+  const soundIndicatorTimerRef = useRef<number | null>(null);
   const warmQueueRef = useRef<string[]>([]);
   const lastScrollTopRef = useRef(0);
   const lastScrollTsRef = useRef(0);
@@ -432,6 +434,10 @@ export default function Home() {
       Object.values(horizontalScrollRafRef.current).forEach((rafId) => {
         if (rafId !== null && rafId !== undefined) cancelAnimationFrame(rafId);
       });
+
+      if (soundIndicatorTimerRef.current !== null) {
+        window.clearTimeout(soundIndicatorTimerRef.current);
+      }
     };
   }, []);
 
@@ -574,6 +580,18 @@ export default function Home() {
     toast.success(saved ? 'Removed from wishlist' : 'Added to wishlist');
   };
 
+  const toggleSoundFromReelTap = useCallback(() => {
+    setIsMuted((prev) => {
+      const nextMuted = !prev;
+      setSoundIndicator(nextMuted ? 'muted' : 'unmuted');
+      if (soundIndicatorTimerRef.current !== null) {
+        window.clearTimeout(soundIndicatorTimerRef.current);
+      }
+      soundIndicatorTimerRef.current = window.setTimeout(() => setSoundIndicator(null), 800);
+      return nextMuted;
+    });
+  }, []);
+
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
@@ -679,6 +697,11 @@ export default function Home() {
                         key={`${video.id}-${reelIndex}`}
                         className="relative h-full w-full shrink-0 snap-start overflow-hidden"
                         style={{ contentVisibility: 'auto', containIntrinsicSize: '100vh' }}
+                        onClick={(event) => {
+                          const target = event.target as HTMLElement;
+                          if (target.closest('button, a, input, textarea, select, label')) return;
+                          toggleSoundFromReelTap();
+                        }}
                       >
                         <video
                           ref={(el) => {
@@ -703,6 +726,17 @@ export default function Home() {
                           }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/45 pointer-events-none" />
+                        {rowIndex === activeIndex && reelIndex === rowHorizontalPos && soundIndicator && (
+                          <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+                            <div className="rounded-full bg-black/45 backdrop-blur-sm p-3">
+                              {soundIndicator === 'muted' ? (
+                                <VolumeX className="h-7 w-7 text-white" />
+                              ) : (
+                                <Volume2 className="h-7 w-7 text-white" />
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                         {video.isLive && (
                           <div
@@ -845,14 +879,6 @@ export default function Home() {
               <div aria-hidden className="w-10 h-10" />
 
               <div className="flex items-center gap-1 pointer-events-auto">
-                <button
-                  type="button"
-                  onClick={() => setIsMuted((prev) => !prev)}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors ui-pressable ui-focus-ring"
-                  aria-label={isMuted ? 'Unmute videos' : 'Mute videos'}
-                >
-                  {isMuted ? <VolumeX className="w-6 h-6 text-white" /> : <Volume2 className="w-6 h-6 text-white" />}
-                </button>
                 <Link
                   to="/messages"
                   className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors ui-pressable ui-focus-ring"

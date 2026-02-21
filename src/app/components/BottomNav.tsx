@@ -1,12 +1,35 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { Home, Search, Plus, ShoppingBag, User, Store, BadgeCheck, Video, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { useBasketStore } from '../store/useBasketStore';
 import { toast } from 'sonner';
 import { mockProducts } from '../data/mockData';
-import { useCreatorFlowStore } from '../store/useCreatorFlowStore';
+import { useCreatorFlowStore, type VendorListing } from '../store/useCreatorFlowStore';
+import type { Product } from '../types';
 
 type CreateMode = 'vendor' | 'showcase' | 'review' | null;
+type VendorProductMode = 'existing' | 'new';
+
+const buildCustomVendorProduct = (listing: VendorListing): Product | null => {
+  if (!listing.customProductName?.trim()) return null;
+  const fallbackImage = mockProducts[0]?.image ?? `${import.meta.env.BASE_URL}pics/avatars/avatar1.jpg`;
+  const creatorUsername = listing.vendorUsername || 'vendor';
+
+  return {
+    id: listing.productId,
+    category: listing.customProductCategory?.trim() || 'vendor/custom',
+    name: listing.customProductName.trim(),
+    price: listing.customProductPrice ?? 0,
+    image: fallbackImage,
+    description: listing.productDescription?.trim() || 'Vendor-added product',
+    sizes: ['One Size'],
+    creatorId: creatorUsername,
+    creatorUsername,
+    creatorAvatar: `${import.meta.env.BASE_URL}pics/avatars/avatar1.jpg`,
+    rating: 4.5,
+    reviews: 0,
+  };
+};
 
 export function BottomNav() {
   const ICON_CONTAINER_SIZE = 30;
@@ -22,9 +45,13 @@ export function BottomNav() {
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [activeCreateMode, setActiveCreateMode] = useState<CreateMode>(null);
   const [selectedProductId, setSelectedProductId] = useState<string>(mockProducts[0]?.id ?? '');
-  const [selectedListingId, setSelectedListingId] = useState<string>('');
+  const [selectedShowcaseListingIds, setSelectedShowcaseListingIds] = useState<string[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
   const [affiliateRate, setAffiliateRate] = useState<number>(12);
+  const [vendorProductMode, setVendorProductMode] = useState<VendorProductMode>('existing');
+  const [newProductName, setNewProductName] = useState('');
+  const [newProductCategory, setNewProductCategory] = useState('vendor/custom');
+  const [newProductPrice, setNewProductPrice] = useState<number>(0);
   const [caption, setCaption] = useState('');
   const [vendorDescription, setVendorDescription] = useState('');
   const [vendorImageName, setVendorImageName] = useState('');
@@ -51,11 +78,42 @@ export function BottomNav() {
         .filter((item) => item.isActive)
         .map((listing) => ({
           ...listing,
-          product: mockProducts.find((product) => product.id === listing.productId),
+          product: mockProducts.find((product) => product.id === listing.productId) ?? buildCustomVendorProduct(listing),
         }))
         .filter((listing) => Boolean(listing.product)),
     [vendorListings]
   );
+
+  const mockProductAffiliateRates = useMemo(() => {
+    const toRate = (productId: string) => {
+      const seed = productId.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+      return 3 + (seed % 18);
+    };
+    return Object.fromEntries(mockProducts.map((product) => [product.id, toRate(product.id)])) as Record<string, number>;
+  }, []);
+
+  const showcaseListings = useMemo(() => {
+    const vendorBacked = activeVendorListings.map((listing) => ({
+      id: listing.id,
+      productId: listing.productId,
+      affiliateRate: listing.affiliateRate,
+      product: listing.product,
+      source: 'vendor' as const,
+    }));
+
+    const vendorBackedProductIds = new Set(vendorBacked.map((item) => item.productId));
+    const mockBacked = mockProducts
+      .filter((product) => !vendorBackedProductIds.has(product.id))
+      .map((product) => ({
+        id: `mock-${product.id}`,
+        productId: product.id,
+        affiliateRate: mockProductAffiliateRates[product.id] ?? 8,
+        product,
+        source: 'mock' as const,
+      }));
+
+    return [...vendorBacked, ...mockBacked];
+  }, [activeVendorListings, mockProductAffiliateRates]);
 
   const basketReviewOrders = useMemo(
     () =>
@@ -119,8 +177,12 @@ export function BottomNav() {
 
   const resetCreateState = () => {
     setCaption('');
-    setSelectedListingId('');
+    setSelectedShowcaseListingIds([]);
     setSelectedOrderId('');
+    setVendorProductMode('existing');
+    setNewProductName('');
+    setNewProductCategory('vendor/custom');
+    setNewProductPrice(0);
     setVendorDescription('');
     setVendorImageName('');
     setInstagramUrl('');
@@ -139,8 +201,16 @@ export function BottomNav() {
 
   const handleVendorSubmit = () => {
     const product = mockProducts.find((item) => item.id === selectedProductId);
-    if (!product) {
+    const isNewProductMode = vendorProductMode === 'new';
+    const normalizedName = newProductName.trim();
+    const normalizedCategory = newProductCategory.trim();
+
+    if (!isNewProductMode && !product) {
       toast.error('Select a valid product');
+      return;
+    }
+    if (isNewProductMode && !normalizedName) {
+      toast.error('Enter new product name');
       return;
     }
     if (!instagramUrl && !vendorImageName) {
@@ -151,40 +221,42 @@ export function BottomNav() {
       toast.error('Add product description or Instagram link');
       return;
     }
-    const listing = addVendorListing({
-      productId: product.id,
+    const generatedCustomProductId = `vendor_custom_${Date.now()}`;
+    addVendorListing({
+      productId: isNewProductMode ? generatedCustomProductId : (product?.id ?? ''),
       affiliateRate,
-      vendorUsername: product.creatorUsername || 'vendor',
+      vendorUsername: product?.creatorUsername || 'vendor_personal',
+      customProductName: isNewProductMode ? normalizedName : undefined,
+      customProductCategory: isNewProductMode ? normalizedCategory || 'vendor/custom' : undefined,
+      customProductPrice: isNewProductMode ? Math.max(0, Number(newProductPrice) || 0) : undefined,
       productImageName: vendorImageName || undefined,
       productDescription: vendorDescription.trim() || undefined,
       instagramUrl: instagramUrl.trim() || undefined,
     });
-    setSelectedListingId(listing.id);
     toast.success('Vendor product registered');
     closeCreateSheet();
   };
 
   const handleShowcasePick = () => {
-    if (!selectedListingId) {
-      toast.error('Select a vendor product first');
+    if (selectedShowcaseListingIds.length === 0) {
+      toast.error('Select at least one product');
       return;
     }
     if (instagramUrl.trim()) {
-      const listing = activeVendorListings.find((item) => item.id === selectedListingId);
-      if (!listing) {
-        toast.error('Select a valid vendor product');
-        return;
-      }
-      submitCreatorContent({
-        listingId: listing.id,
-        productId: listing.productId,
-        creatorUsername: 'creator_user',
-        contentType: 'showcase',
-        caption: caption || `Showcase for ${listing.product?.name}`,
-        mediaName: 'instagram-link',
-        instagramUrl: instagramUrl.trim(),
+      selectedShowcaseListingIds.forEach((listingId) => {
+        const listing = showcaseListings.find((item) => item.id === listingId);
+        if (!listing) return;
+        submitCreatorContent({
+          listingId: listing.id,
+          productId: listing.productId,
+          creatorUsername: 'creator_user',
+          contentType: 'showcase',
+          caption: caption || `Showcase for ${listing.product?.name}`,
+          mediaName: 'instagram-link',
+          instagramUrl: instagramUrl.trim(),
+        });
       });
-      toast.success(`Showcase link submitted • ${listing.affiliateRate}% affiliate`);
+      toast.success(`Showcase link submitted for ${selectedShowcaseListingIds.length} product(s)`);
       closeCreateSheet();
       return;
     }
@@ -258,23 +330,26 @@ export function BottomNav() {
   const handleShowcaseFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const listing = activeVendorListings.find((item) => item.id === selectedListingId);
-    if (!listing) {
-      toast.error('Select a vendor product first');
+    if (selectedShowcaseListingIds.length === 0) {
+      toast.error('Select at least one product');
       event.target.value = '';
       return;
     }
 
-    submitCreatorContent({
-      listingId: listing.id,
-      productId: listing.productId,
-      creatorUsername: 'creator_user',
-      contentType: 'showcase',
-      caption: caption || `Showcase for ${listing.product?.name}`,
-      mediaName: file.name,
-      instagramUrl: instagramUrl.trim() || undefined,
+    selectedShowcaseListingIds.forEach((listingId) => {
+      const listing = showcaseListings.find((item) => item.id === listingId);
+      if (!listing) return;
+      submitCreatorContent({
+        listingId: listing.id,
+        productId: listing.productId,
+        creatorUsername: 'creator_user',
+        contentType: 'showcase',
+        caption: caption || `Showcase for ${listing.product?.name}`,
+        mediaName: file.name,
+        instagramUrl: instagramUrl.trim() || undefined,
+      });
     });
-    toast.success(`Showcase uploaded • ${listing.affiliateRate}% affiliate`);
+    toast.success(`Showcase uploaded for ${selectedShowcaseListingIds.length} product(s)`);
     closeCreateSheet();
     event.target.value = '';
   };
@@ -289,13 +364,13 @@ export function BottomNav() {
 
   useEffect(() => {
     if (activeCreateMode !== 'showcase') return;
-    if (!selectedListingId) return;
+    if (selectedShowcaseListingIds.length === 0) return;
     if (instagramUrl.trim()) return;
     const timer = window.setTimeout(() => {
       showcasePickerRef.current?.click();
     }, 120);
     return () => window.clearTimeout(timer);
-  }, [activeCreateMode, instagramUrl, selectedListingId]);
+  }, [activeCreateMode, instagramUrl, selectedShowcaseListingIds]);
 
   useEffect(() => {
     if (activeCreateMode !== 'review') return;
@@ -366,20 +441,73 @@ export function BottomNav() {
 
             {activeCreateMode === 'vendor' && (
               <div className="space-y-3">
-                <label className="block text-xs text-zinc-600">
-                  Product
-                  <select
-                    value={selectedProductId}
-                    onChange={(event) => setSelectedProductId(event.target.value)}
-                    className="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setVendorProductMode('existing')}
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
+                      vendorProductMode === 'existing' ? 'border-black bg-black text-white' : 'border-zinc-300 text-zinc-700'
+                    }`}
                   >
-                    {mockProducts.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    Existing Product
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVendorProductMode('new')}
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
+                      vendorProductMode === 'new' ? 'border-black bg-black text-white' : 'border-zinc-300 text-zinc-700'
+                    }`}
+                  >
+                    New Product
+                  </button>
+                </div>
+                {vendorProductMode === 'existing' ? (
+                  <label className="block text-xs text-zinc-600">
+                    Product
+                    <select
+                      value={selectedProductId}
+                      onChange={(event) => setSelectedProductId(event.target.value)}
+                      className="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
+                    >
+                      {mockProducts.map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="block text-xs text-zinc-600">
+                      New Product Name
+                      <input
+                        value={newProductName}
+                        onChange={(event) => setNewProductName(event.target.value)}
+                        placeholder="Enter product name"
+                        className="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="block text-xs text-zinc-600">
+                      Category
+                      <input
+                        value={newProductCategory}
+                        onChange={(event) => setNewProductCategory(event.target.value)}
+                        placeholder="e.g. beauty/accessory"
+                        className="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="block text-xs text-zinc-600">
+                      Price (Toman)
+                      <input
+                        type="number"
+                        min={0}
+                        value={newProductPrice}
+                        onChange={(event) => setNewProductPrice(Number(event.target.value))}
+                        className="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
+                      />
+                    </label>
+                  </div>
+                )}
                 <label className="block text-xs text-zinc-600">
                   Affiliate Rate (%)
                   <input
@@ -424,28 +552,45 @@ export function BottomNav() {
                   onClick={handleVendorSubmit}
                   className="w-full rounded-xl bg-black px-3 py-2.5 text-sm font-semibold text-white"
                 >
-                  Register Vendor Product
+                  {vendorProductMode === 'new' ? 'Register New Vendor Product' : 'Register Vendor Product'}
                 </button>
               </div>
             )}
 
-            {activeCreateMode === 'showcase' && (
+                        {activeCreateMode === 'showcase' && (
               <div className="space-y-3">
-                <label className="block text-xs text-zinc-600">
-                  Vendor Product
-                  <select
-                    value={selectedListingId}
-                    onChange={(event) => setSelectedListingId(event.target.value)}
-                    className="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
-                  >
-                    <option value="">Select listing</option>
-                    {activeVendorListings.map((listing) => (
-                      <option key={listing.id} value={listing.id}>
-                        {listing.product?.name} • {listing.affiliateRate}% affiliate
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div>
+                  <p className="text-xs text-zinc-600 mb-2">Select one or multiple product cards</p>
+                  <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
+                    {showcaseListings.map((listing) => {
+                      const selected = selectedShowcaseListingIds.includes(listing.id);
+                      return (
+                        <button
+                          key={listing.id}
+                          type="button"
+                          onClick={() =>
+                            setSelectedShowcaseListingIds((prev) =>
+                              prev.includes(listing.id) ? prev.filter((id) => id !== listing.id) : [...prev, listing.id]
+                            )
+                          }
+                          className={`rounded-xl border p-2 text-left transition ${selected ? 'border-black bg-zinc-100' : 'border-zinc-200 bg-white'}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={listing.product?.image}
+                              alt={listing.product?.name}
+                              className="h-9 w-9 rounded-md object-cover"
+                            />
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-semibold leading-4 truncate">{listing.product?.name}</p>
+                              <p className="text-[10px] text-zinc-500 leading-4">{listing.affiliateRate}% affiliate</p>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <textarea
                   value={caption}
                   onChange={(event) => setCaption(event.target.value)}
@@ -481,7 +626,7 @@ export function BottomNav() {
                     <option value="">Select basket product</option>
                     {basketReviewOrders.map((order) => (
                       <option key={order.orderId} value={order.orderId}>
-                        {order.product.name} • {order.orderId}
+                        {order.product.name} â€¢ {order.orderId}
                       </option>
                     ))}
                   </select>
@@ -608,3 +753,9 @@ export function BottomNav() {
     </nav>
   );
 }
+
+
+
+
+
+
