@@ -735,16 +735,20 @@ export default function Home() {
                                   toggleFollow(video.username);
                                   toast.success(isFollowingPage ? `Unfollowed @${video.username}` : `Followed @${video.username}`);
                                 }}
-                                className="relative ui-pressable ui-focus-ring"
+                                className="relative w-11 h-11 flex-shrink-0 ui-pressable ui-focus-ring"
                                 aria-label={isFollowingPage ? `Unfollow ${video.username}` : `Follow ${video.username}`}
                               >
-                                <img src={video.userAvatar} alt={video.username} className="w-8 h-8 rounded-full border border-white/85" />
+                                <img
+                                  src={video.userAvatar}
+                                  alt={video.username}
+                                  className="w-11 h-11 rounded-full object-cover ring-2 ring-white/90 shadow-[0_6px_14px_rgba(0,0,0,0.35)]"
+                                />
                                 <div
-                                  className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center border border-black ${
+                                  className={`absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full flex items-center justify-center border border-black ${
                                     isFollowingPage ? 'bg-emerald-500' : 'bg-red-500'
                                   }`}
                                 >
-                                  <span className="text-white text-[10px] font-bold">{isFollowingPage ? '?' : '+'}</span>
+                                  <span className="text-white text-[10px] font-bold">{isFollowingPage ? '✓' : '+'}</span>
                                 </div>
                               </button>
                               <button
