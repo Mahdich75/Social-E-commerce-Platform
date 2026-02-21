@@ -86,8 +86,7 @@ export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount, com
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} dismissible shouldScaleBackground={false}>
-      <DrawerContent className="max-h-[85vh]">
-        <div className="w-12 h-1.5 bg-zinc-300 rounded-full mx-auto mt-3 mb-2" />
+      <DrawerContent className="max-h-[85vh] [&>div:first-child]:hidden">
 
         <DrawerHeader className="border-b border-zinc-200 px-4 py-4">
           <div className="flex items-center justify-between">
@@ -187,4 +186,3 @@ export function CommentsDrawer({ open, onOpenChange, videoId, commentsCount, com
     </Drawer>
   );
 }
-
