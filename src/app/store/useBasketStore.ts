@@ -54,20 +54,30 @@ export const useBasketStore = create<BasketStore>()(
         const existing = get().items.find((item) => item.orderId === orderId);
         if (existing) {
           set({
-            items: get().items.map((item) =>
-              item.orderId === orderId
-                ? {
-                    ...item,
-                    product,
-                    finalPrice,
-                    sellerName,
-                    paymentConfirmed: true,
-                    orderStatus: 'Paid',
-                    selectedSize: selectedSize ?? item.selectedSize,
-                    selectedColor: selectedColor ?? item.selectedColor,
-                  }
-                : item
-            ),
+            items: get()
+              .items
+              .filter(
+                (item) =>
+                  !(
+                    item.orderStatus === 'Negotiating' &&
+                    item.product.id === product.id &&
+                    item.orderId !== orderId
+                  )
+              )
+              .map((item) =>
+                item.orderId === orderId
+                  ? {
+                      ...item,
+                      product,
+                      finalPrice,
+                      sellerName,
+                      paymentConfirmed: true,
+                      orderStatus: 'Paid',
+                      selectedSize: selectedSize ?? item.selectedSize,
+                      selectedColor: selectedColor ?? item.selectedColor,
+                    }
+                  : item
+              ),
           });
           return;
         }
@@ -85,7 +95,9 @@ export const useBasketStore = create<BasketStore>()(
               selectedSize,
               selectedColor,
             },
-            ...get().items,
+            ...get().items.filter(
+              (item) => !(item.orderStatus === 'Negotiating' && item.product.id === product.id)
+            ),
           ],
         });
       },
