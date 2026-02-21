@@ -363,16 +363,6 @@ export function BottomNav() {
   };
 
   useEffect(() => {
-    if (activeCreateMode !== 'showcase') return;
-    if (selectedShowcaseListingIds.length === 0) return;
-    if (instagramUrl.trim()) return;
-    const timer = window.setTimeout(() => {
-      showcasePickerRef.current?.click();
-    }, 120);
-    return () => window.clearTimeout(timer);
-  }, [activeCreateMode, instagramUrl, selectedShowcaseListingIds]);
-
-  useEffect(() => {
     if (activeCreateMode !== 'review') return;
     if (!selectedOrderId) return;
     if (instagramUrl.trim()) return;
